@@ -48,11 +48,11 @@ export default function TrendsPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-xl text-gray-600 mb-8"
           >
-            Explore the latest travel trends and popular destinations. This page is coming soon!
+            Entdecke die neuesten Reisetrends und beliebte Ziele. Diese Seite kommt demnächst!
           </motion.p>
           <Link href="/home">
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-              Go to Home
+              Zur Startseite
             </button>
           </Link>
         </div>

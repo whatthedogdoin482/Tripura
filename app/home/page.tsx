@@ -2,15 +2,26 @@
 
 import { useState, useEffect } from 'react'
 import { MapPin, Navigation, Star, Flame, Sparkles } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import AIAssistant from '@/components/AIAssistant'
 import RoutePlanner from '@/components/RoutePlanner'
+import BudgetPlanner from '@/components/BudgetPlanner'
+import WeatherBadge from '@/components/WeatherBadge'
+import OnboardingEngine from '@/components/OnboardingEngine'
+import AuthModal from '@/components/AuthModal'
+import RouteQuestionnaireFlow from '@/components/RouteQuestionnaireFlow'
+import { hasCompletedOnboarding } from '@/lib/preferences'
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState('locations')
   const [showAIAssistant, setShowAIAssistant] = useState(false)
   const [showRoutePlanner, setShowRoutePlanner] = useState(false)
+  const [showBudgetPlanner, setShowBudgetPlanner] = useState(false)
+  const [showRouteQuestionnaire, setShowRouteQuestionnaire] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [afterOnboarding, setAfterOnboarding] = useState<'route' | 'auth' | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
@@ -34,20 +45,20 @@ export default function Home() {
   ]
 
   const bestActivities = [
-    { name: 'Mountain Hiking', icon: '🏔️', description: 'Explore breathtaking trails' },
-    { name: 'Cultural Tours', icon: '🏛️', description: 'Discover local heritage' },
-    { name: 'Food Experiences', icon: '🍽️', description: 'Taste authentic cuisine' },
-    { name: 'Adventure Sports', icon: '🏄', description: 'Thrilling outdoor activities' },
+    { name: 'Wandern', icon: '🏔️', description: 'Atemberaubende Wege entdecken' },
+    { name: 'Kulturtouren', icon: '🏛️', description: 'Lokales Erbe erleben' },
+    { name: 'Kulinarik', icon: '🍽️', description: 'Authentische Küche probieren' },
+    { name: 'Abenteuer-Sport', icon: '🏄', description: 'Outdoor-Aktivitäten' },
   ]
 
   const fireOffers = [
-    { title: '50% Off Europe Tours', discount: '50%', validUntil: 'Dec 31, 2024' },
-    { title: 'Free Hotel Upgrade', discount: 'FREE', validUntil: 'Jan 15, 2025' },
-    { title: 'Complimentary Airport Transfer', discount: 'FREE', validUntil: 'Feb 28, 2025' },
+    { title: '50 % Rabatt Europa-Touren', discount: '50%', validUntil: '31.12.2024' },
+    { title: 'Kostenloses Hotel-Upgrade', discount: 'GRATIS', validUntil: '15.01.2025' },
+    { title: 'Kostenloser Flughafen-Transfer', discount: 'GRATIS', validUntil: '28.02.2025' },
   ]
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom, #3282B8, #1B262C)' }}>
+    <div className="min-h-screen">
       {/* Header */}
       <header 
         className="sticky top-0 w-full z-50 transition-all duration-300 bg-transparent"
@@ -71,17 +82,28 @@ export default function Home() {
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/home" className="text-[#1B262C] hover:text-[#BBE1FA] transition-colors font-bold font-family: 'Satoshi', sans-serif">
+              <Link href="/home" className="text-[#BBE1FA] hover:text-white transition-colors font-bold font-family: 'Satoshi', sans-serif">
                 Planer
               </Link>
-              <Link href="/activities" className="text-[#1B262C] hover:text-[#BBE1FA] transition-colors font-bold font-family: 'Satoshi', sans-serif">
+              <Link href="/activities" className="text-[#BBE1FA] hover:text-white transition-colors font-bold font-family: 'Satoshi', sans-serif">
                 Activities
               </Link>
-              <Link href="/trends" className="text-[#1B262C] hover:text-[#BBE1FA] transition-colors font-bold font-family: 'Satoshi', sans-serif">
+              <Link href="/trends" className="text-[#BBE1FA] hover:text-white transition-colors font-bold font-family: 'Satoshi', sans-serif">
                 Trends
               </Link>
-              <button className="bg-[#BBE1FA] text-[#1B262C] hover:text-[#1B262C] px-6 py-2 rounded-full font-extrabold font-family: 'Satoshi', sans-serif transition-colors uppercase transition-all duration-200 hover:shadow-xl">
-                LOGIN
+              <button
+                type="button"
+                onClick={() => {
+                  if (hasCompletedOnboarding()) {
+                    setShowAuth(true)
+                  } else {
+                    setAfterOnboarding('auth')
+                    setShowOnboarding(true)
+                  }
+                }}
+                className="bg-[#BBE1FA] text-[#1B262C] hover:text-[#1B262C] px-6 py-2 rounded-full font-extrabold font-family: 'Satoshi', sans-serif transition-colors uppercase transition-all duration-200 hover:shadow-xl"
+              >
+                ANMELDEN
               </button>
             </nav>
 
@@ -103,17 +125,16 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-5xl md:text-6xl font-black mb-6 uppercase tracking-tight"
-              style={{ color: '#1B262C' }}
+              className="text-5xl md:text-6xl font-black mb-6 uppercase tracking-tight heading-reverse-gradient"
             >
-              Plan Your Perfect Vacation
+              Plane deinen perfekten Urlaub
             </motion.h2>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-xl max-w-3xl mx-auto mb-12 font-bold"
-              style={{ color: '#BBE1FA' }}
+              style={{ color: 'rgba(187, 225, 250, 0.95)' }}
             >
               Discover amazing destinations, plan your route with AI-powered recommendations, 
               and create unforgettable memories with personalized travel advice.
@@ -137,8 +158,8 @@ export default function Home() {
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <MapPin className="w-16 h-16 mx-auto mb-4" style={{ color: '#BBE1FA' }} />
-                  <h3 className="text-2xl font-black mb-2" style={{ color: '#1B262C' }}>Interactive Map</h3>
-                  <p className="font-bold" style={{ color: '#BBE1FA' }}>Click the buttons below to start planning</p>
+                  <h3 className="text-2xl font-black mb-2" style={{ color: '#BBE1FA' }}>Interactive Map</h3>
+                  <p className="font-bold" style={{ color: '#BBE1FA' }}>Klicke auf die Buttons unten, um mit der Planung zu starten</p>
                 </div>
               </div>
               
@@ -147,7 +168,14 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowRoutePlanner(true)}
+                  onClick={() => {
+                    if (hasCompletedOnboarding()) {
+                      setShowBudgetPlanner(true)
+                    } else {
+                      setAfterOnboarding('route')
+                      setShowOnboarding(true)
+                    }
+                  }}
                   className="px-8 py-4 rounded-full font-black shadow-lg flex items-center space-x-2 transition-all duration-200 uppercase"
                   style={{ 
                     backgroundColor: '#BBE1FA',
@@ -155,7 +183,7 @@ export default function Home() {
                   }}
                 >
                   <Navigation className="w-5 h-5" />
-                  <span>Plan Route</span>
+                  <span>Route planen</span>
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -179,9 +207,9 @@ export default function Home() {
             <div className="rounded-full p-2 shadow-lg" style={{ backgroundColor: '#3282B8' }}>
               <div className="flex space-x-2">
                 {[
-                  { id: 'locations', label: 'Best Locations', icon: MapPin },
-                  { id: 'activities', label: 'Best Activities', icon: Star },
-                  { id: 'offers', label: 'Fire Offers', icon: Flame },
+                  { id: 'locations', label: 'Top-Ziele', icon: MapPin },
+                  { id: 'activities', label: 'Top-Aktivitäten', icon: Star },
+                  { id: 'offers', label: 'Angebote', icon: Flame },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -234,18 +262,21 @@ export default function Home() {
                         alt={location.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute top-4 right-4 rounded-full px-3 py-1 flex items-center space-x-1 backdrop-blur-sm" style={{ backgroundColor: 'rgba(27, 38, 44, 0.9)' }}>
+                      <div className="absolute top-4 right-4 flex items-center gap-2">
+                      <WeatherBadge placeType="sightseeing" placeName={location.name} className="backdrop-blur-sm" />
+                      <div className="rounded-full px-3 py-1 flex items-center space-x-1 backdrop-blur-sm" style={{ backgroundColor: 'rgba(27, 38, 44, 0.9)' }}>
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
                         <span className="text-sm font-bold" style={{ color: '#BBE1FA' }}>{location.rating}</span>
                       </div>
                     </div>
+                    </div>
                     <div className="p-6">
-                      <h3 className="text-lg font-black mb-2" style={{ color: '#1B262C' }}>{location.name}</h3>
+                      <h3 className="text-lg font-black mb-2" style={{ color: '#BBE1FA' }}>{location.name}</h3>
                       <button className="w-full py-2 px-4 rounded-full font-bold transition-colors duration-200 uppercase" style={{ 
                         backgroundColor: '#BBE1FA',
                         color: '#1B262C'
                       }}>
-                        Explore
+                        Entdecken
                       </button>
                     </div>
                   </motion.div>
@@ -272,14 +303,17 @@ export default function Home() {
                       boxShadow: '0 10px 25px rgba(97, 163, 207, 0.3)'
                     }}
                   >
-                    <div className="text-4xl mb-4">{activity.icon}</div>
-                    <h3 className="text-lg font-black mb-2" style={{ color: '#1B262C' }}>{activity.name}</h3>
+                    <div className="flex items-start justify-between gap-2 mb-4">
+                    <div className="text-4xl">{activity.icon}</div>
+                    <WeatherBadge placeType="activity" placeName={activity.name} />
+                  </div>
+                  <h3 className="text-lg font-black mb-2" style={{ color: '#1B262C' }}>{activity.name}</h3>
                     <p className="mb-4 font-bold" style={{ color: '#BBE1FA' }}>{activity.description}</p>
                     <button className="w-full py-2 px-4 rounded-full font-bold transition-colors duration-200 uppercase" style={{ 
                       backgroundColor: '#BBE1FA',
                       color: '#1B262C'
                     }}>
-                      Discover
+                      Entdecken
                     </button>
                   </motion.div>
                 ))}
@@ -314,13 +348,13 @@ export default function Home() {
                         {offer.discount}
                       </span>
                     </div>
-                    <h3 className="text-xl font-black mb-2" style={{ color: '#1B262C' }}>{offer.title}</h3>
+                    <h3 className="text-xl font-black mb-2" style={{ color: '#BBE1FA' }}>{offer.title}</h3>
                     <p className="mb-4 font-bold" style={{ color: '#BBE1FA' }}>Valid until {offer.validUntil}</p>
                     <button className="w-full py-3 px-4 rounded-full font-bold transition-all duration-200 uppercase" style={{ 
                       backgroundColor: '#BBE1FA',
                       color: '#1B262C'
                     }}>
-                      Claim Offer
+                      Angebot sichern
                     </button>
                   </motion.div>
                 ))}
@@ -344,10 +378,10 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-black" style={{ color: '#BBE1FA' }}>Tripura</h3>
             </div>
-            <p className="mb-6 font-bold" style={{ color: '#BBE1FA' }}>Your AI-powered vacation planning companion</p>
+            <p className="mb-6 font-bold" style={{ color: '#BBE1FA' }}>Dein KI-gestützter Urlaubsplaner</p>
             <div className="flex justify-center space-x-6">
-              <a href="#" className="font-bold transition-colors" style={{ color: '#BBE1FA' }}>Privacy</a>
-              <a href="#" className="font-bold transition-colors" style={{ color: '#BBE1FA' }}>Terms</a>
+              <a href="#" className="font-bold transition-colors" style={{ color: '#BBE1FA' }}>Datenschutz</a>
+              <a href="#" className="font-bold transition-colors" style={{ color: '#BBE1FA' }}>AGB</a>
               <a href="#" className="font-bold transition-colors" style={{ color: '#BBE1FA' }}>Support</a>
             </div>
           </div>
@@ -358,8 +392,55 @@ export default function Home() {
       {showAIAssistant && (
         <AIAssistant onClose={() => setShowAIAssistant(false)} />
       )}
+      {showBudgetPlanner && (
+        <BudgetPlanner
+          onClose={() => setShowBudgetPlanner(false)}
+          onContinue={() => {
+            setShowBudgetPlanner(false)
+            setShowRoutePlanner(true)
+          }}
+          tripDays={7}
+        />
+      )}
       {showRoutePlanner && (
-        <RoutePlanner onClose={() => setShowRoutePlanner(false)} />
+        <RoutePlanner
+          onClose={() => setShowRoutePlanner(false)}
+          onRouteCreate={() => {
+            setShowRoutePlanner(false)
+            setShowRouteQuestionnaire(true)
+          }}
+        />
+      )}
+
+      <AnimatePresence>
+        {showRouteQuestionnaire && (
+          <div className="fixed inset-0 z-[100]">
+            <RouteQuestionnaireFlow
+              onComplete={() => setShowRouteQuestionnaire(false)}
+            />
+          </div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showOnboarding && (
+          <OnboardingEngine
+            allowSkip
+            onComplete={() => {
+              setShowOnboarding(false)
+              if (afterOnboarding === 'route') setShowBudgetPlanner(true)
+              if (afterOnboarding === 'auth') setShowAuth(true)
+              setAfterOnboarding(null)
+            }}
+          />
+        )}
+      </AnimatePresence>
+      {showAuth && (
+        <AuthModal
+          onClose={() => setShowAuth(false)}
+          onEmail={() => setShowAuth(false)}
+          onApple={() => setShowAuth(false)}
+          onGoogle={() => setShowAuth(false)}
+        />
       )}
     </div>
   )

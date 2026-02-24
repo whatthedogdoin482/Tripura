@@ -20,7 +20,7 @@ export default function AIAssistant({ onClose }: AIAssistantProps) {
     {
       id: '1',
       type: 'assistant',
-      content: "Hi! I'm your AI travel assistant. I can help you plan your vacation, suggest destinations, find activities, and estimate costs. What would you like to know?",
+      content: "Hallo! Ich bin dein KI-Reiseassistent. Ich helfe dir bei der Urlaubsplanung, bei Zielen, Aktivitäten und Kosten. Worüber möchtest du mehr erfahren?",
       timestamp: new Date()
     }
   ])
@@ -28,10 +28,10 @@ export default function AIAssistant({ onClose }: AIAssistantProps) {
   const [isTyping, setIsTyping] = useState(false)
 
   const quickQuestions = [
-    "Best places to visit in Europe?",
-    "Budget-friendly destinations",
-    "Family vacation ideas",
-    "Adventure travel options"
+    "Beste Reiseziele in Europa?",
+    "Günstige Reiseziele",
+    "Familienurlaub-Ideen",
+    "Abenteuer-Reisen"
   ]
 
   const handleSendMessage = async () => {
@@ -51,10 +51,10 @@ export default function AIAssistant({ onClose }: AIAssistantProps) {
     // Simulate AI response (replace with actual AI API call)
     setTimeout(() => {
       const responses = [
-        "Based on your preferences, I'd recommend checking out Santorini, Greece for stunning sunsets and beautiful beaches. It's perfect for a romantic getaway!",
-        "For budget-friendly options, consider Southeast Asia destinations like Thailand or Vietnam. You can have an amazing experience for under $50/day.",
-        "For family vacations, I suggest theme parks like Disney World or natural wonders like Yellowstone National Park. Both offer activities for all ages.",
-        "Adventure seekers will love New Zealand for hiking, Costa Rica for zip-lining, or Nepal for trekking. These destinations offer incredible outdoor experiences."
+        "Zu deinen Wünschen passt z. B. Santorini in Griechenland – traumhafte Sonnenuntergänge und Strände. Ideal für einen romantischen Urlaub!",
+        "Für wenig Geld empfehle ich Südostasien, z. B. Thailand oder Vietnam. Tolle Erlebnisse sind dort schon ab etwa 50 €/Tag möglich.",
+        "Für Familien eignen sich Freizeitparks wie Disney oder Naturwunder wie der Yellowstone-Nationalpark. Für jede Altersgruppe ist etwas dabei.",
+        "Abenteuer-Fans lieben Neuseeland zum Wandern, Costa Rica für Ziplining oder Nepal zum Trekken. Alles Top-Ziele für Outdoor-Erlebnisse."
       ]
       
       const randomResponse = responses[Math.floor(Math.random() * responses.length)]
@@ -90,8 +90,8 @@ export default function AIAssistant({ onClose }: AIAssistantProps) {
               <Bot className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">AI Travel Assistant</h3>
-              <p className="text-sm text-gray-500">Powered by advanced AI</p>
+              <h3 className="text-lg font-semibold text-gray-900">KI-Reiseassistent</h3>
+              <p className="text-sm text-gray-500">Mit intelligenter KI</p>
             </div>
           </div>
           {onClose && (
@@ -171,7 +171,7 @@ export default function AIAssistant({ onClose }: AIAssistantProps) {
         {/* Quick Questions */}
         {messages.length === 1 && (
           <div className="px-6 pb-4">
-            <p className="text-sm text-gray-600 mb-3">Quick questions:</p>
+            <p className="text-sm text-gray-600 mb-3">Schnellfragen:</p>
             <div className="flex flex-wrap gap-2">
               {quickQuestions.map((question, index) => (
                 <button
@@ -194,7 +194,7 @@ export default function AIAssistant({ onClose }: AIAssistantProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Ask me anything about your travel plans..."
+              placeholder="Frag mich etwas zu deiner Reiseplanung …"
               className="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <button

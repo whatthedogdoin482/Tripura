@@ -55,3 +55,38 @@ a {
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* App-Hintergrund: dunkel an den Rändern, helles Blau in der Mitte – weicher, mittellanger Übergang */
+.app-page-gradient {
+  background: linear-gradient(
+    to right,
+    #1B262C 0%,
+    #1B262C 14%,
+    #2a6b9e 28%,
+    #3282B8 42%,
+    #3282B8 58%,
+    #2a6b9e 72%,
+    #1B262C 86%,
+    #1B262C 100%
+  );
+  min-height: 100vh;
+  color: #BBE1FA;
+}
+
+/* Hauptüberschriften: Reverse-Gradient (hell an den Rändern, dunkel in der Mitte – spiegelbildlich zum Hintergrund) */
+.heading-reverse-gradient {
+  background: linear-gradient(
+    to right,
+    #BBE1FA 0%,
+    #BBE1FA 12%,
+    #7eb8dc 26%,
+    #1B262C 42%,
+    #1B262C 58%,
+    #7eb8dc 74%,
+    #BBE1FA 88%,
+    #BBE1FA 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

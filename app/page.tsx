@@ -1,11 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
+import OnboardingEngine from '@/components/OnboardingEngine'
+import AuthModal from '@/components/AuthModal'
+import { hasCompletedOnboarding } from '@/lib/preferences'
 
 export default function LandingPage() {
+  const router = useRouter()
   const [isScrolled, setIsScrolled] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [afterOnboarding, setAfterOnboarding] = useState<'home' | 'auth' | null>(null)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,7 +30,7 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom, #3282B8, #1B262C)' }}>
+    <div className="min-h-screen">
       {/* Header */}
       <header 
         className="sticky top-0 w-full z-50 transition-all duration-300 bg-transparent"
@@ -46,17 +54,17 @@ export default function LandingPage() {
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/home" className="text-[#1B262C] hover:text-[#BBE1FA] transition-colors font-bold font-family: 'Satoshi', sans-serif">
+              <Link href="/home" className="text-[#BBE1FA] hover:text-white transition-colors font-bold font-family: 'Satoshi', sans-serif">
                 Planer
               </Link>
-              <Link href="/activities" className="text-[#1B262C] hover:text-[#BBE1FA] transition-colors font-bold font-family: 'Satoshi', sans-serif">
+              <Link href="/activities" className="text-[#BBE1FA] hover:text-white transition-colors font-bold font-family: 'Satoshi', sans-serif">
                 Activities
               </Link>
-              <Link href="/trends" className="text-[#1B262C] hover:text-[#BBE1FA] transition-colors font-bold font-family: 'Satoshi', sans-serif">
+              <Link href="/trends" className="text-[#BBE1FA] hover:text-white transition-colors font-bold font-family: 'Satoshi', sans-serif">
                 Trends
               </Link>
               <button className="bg-[#BBE1FA] text-[#1B262C] hover:text-[#1B262C] px-6 py-2 rounded-full font-extrabold font-family: 'Satoshi', sans-serif transition-colors uppercase transition-all duration-200 hover:shadow-xl">
-                LOGIN
+                ANMELDEN
               </button>
             </nav>
 
@@ -77,27 +85,33 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-5xl md:text-7xl font-black mb-12 uppercase tracking-tight"
-            style={{ color: '#1B262C' }}
+            className="text-5xl md:text-7xl font-black mb-12 uppercase tracking-tight heading-reverse-gradient"
           >
-            PLAN YOUR FIRST TRIP
+            PLANE DEINE ERSTE REISE
           </motion.h1>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Link href="/home">
-              <button 
-                className="px-12 py-4 rounded-full font-black font-family: 'Satoshi', sans-serif text-lg uppercase shadow-lg transition-all duration-200 hover:shadow-xl"
-                style={{ 
-                  backgroundColor: '#BBE1FA',
-                  color: '#1B262C'
-                }}
-              >
-                GET STARTED
-              </button>
-            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                if (hasCompletedOnboarding()) {
+                  router.push('/home')
+                } else {
+                  setAfterOnboarding('home')
+                  setShowOnboarding(true)
+                }
+              }}
+              className="px-12 py-4 rounded-full font-black font-family: 'Satoshi', sans-serif text-lg uppercase shadow-lg transition-all duration-200 hover:shadow-xl"
+              style={{ 
+                backgroundColor: '#BBE1FA',
+                color: '#1B262C'
+              }}
+            >
+              LOS GEHT'S
+            </button>
           </motion.div>
         </div>
       </section>
@@ -117,13 +131,13 @@ export default function LandingPage() {
               boxShadow: '0 10px 25px rgba(97, 163, 207, 0.3)'
             }}
           >
-            <h2 className="text-3xl font-black font-family: 'Satoshi', sans-serif mb-4 uppercase text-[#1B262C]">What is TRIPURA?</h2>
+            <h2 className="text-3xl font-black font-family: 'Satoshi', sans-serif mb-4 uppercase text-[#1B262C]">Was ist TRIPURA?</h2>
             <p className="text-lg leading-relaxed font-bold font-family: 'Satoshi', sans-serif text-[#1B262C]">
-              Our goal is to make your <span className="font-black uppercase text-[#BBE1FA]">TRAVELING</span> experience as{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">EASY</span> as possible. So you can{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">SPENT MORE TIME</span> getting the best{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">EXPERIENCE</span> from your{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">TRIP</span> than planning.
+              Unser Ziel ist es, dein <span className="font-black uppercase text-[#BBE1FA]">REISE</span>erlebnis so{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">EINFACH</span> wie möglich zu machen. Damit du{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">MEHR ZEIT</span> mit dem besten{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">ERLEBNIS</span> deiner{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">REISE</span> verbringst als mit der Planung.
             </p>
           </motion.div>
 
@@ -148,13 +162,13 @@ export default function LandingPage() {
               boxShadow: '0 10px 25px rgba(97, 163, 207, 0.3)'
             }}
           >
-            <h2 className="text-3xl font-black font-family: 'Satoshi', sans-serif mb-4 uppercase text-[#1B262C]">What is TRIPURA?</h2>
+            <h2 className="text-3xl font-black font-family: 'Satoshi', sans-serif mb-4 uppercase text-[#1B262C]">Was ist TRIPURA?</h2>
             <p className="text-lg leading-relaxed font-bold font-family: 'Satoshi', sans-serif text-[#1B262C]">
-              Our goal is to make your <span className="font-black uppercase text-[#BBE1FA]">TRAVELING</span> experience as{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">EASY</span> as possible. So you can{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">SPENT MORE TIME</span> getting the best{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">EXPERIENCE</span> from your{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">TRIP</span> than planning.
+              Unser Ziel ist es, dein <span className="font-black uppercase text-[#BBE1FA]">REISE</span>erlebnis so{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">EINFACH</span> wie möglich zu machen. Damit du{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">MEHR ZEIT</span> mit dem besten{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">ERLEBNIS</span> deiner{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">REISE</span> verbringst als mit der Planung.
             </p>
           </motion.div>
 
@@ -179,17 +193,39 @@ export default function LandingPage() {
               boxShadow: '0 10px 25px rgba(97, 163, 207, 0.3)'
             }}
           >
-            <h2 className="text-3xl font-black font-family: 'Satoshi', sans-serif mb-4 uppercase text-[#1B262C]">What is TRIPURA?</h2>
+            <h2 className="text-3xl font-black font-family: 'Satoshi', sans-serif mb-4 uppercase text-[#1B262C]">Was ist TRIPURA?</h2>
             <p className="text-lg leading-relaxed font-bold font-family: 'Satoshi', sans-serif text-[#1B262C]">
-              Our goal is to make your <span className="font-black uppercase text-[#BBE1FA]">TRAVELING</span> experience as{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">EASY</span> as possible. So you can{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">SPENT MORE TIME</span> getting the best{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">EXPERIENCE</span> from your{' '}
-              <span className="font-black uppercase text-[#BBE1FA]">TRIP</span> than planning.
+              Unser Ziel ist es, dein <span className="font-black uppercase text-[#BBE1FA]">REISE</span>erlebnis so{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">EINFACH</span> wie möglich zu machen. Damit du{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">MEHR ZEIT</span> mit dem besten{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">ERLEBNIS</span> deiner{' '}
+              <span className="font-black uppercase text-[#BBE1FA]">REISE</span> verbringst als mit der Planung.
             </p>
           </motion.div>
         </div>
       </section>
+
+      <AnimatePresence>
+        {showOnboarding && (
+          <OnboardingEngine
+            allowSkip
+            onComplete={() => {
+              setShowOnboarding(false)
+              if (afterOnboarding === 'home') router.push('/home')
+              if (afterOnboarding === 'auth') setShowAuth(true)
+              setAfterOnboarding(null)
+            }}
+          />
+        )}
+      </AnimatePresence>
+      {showAuth && (
+        <AuthModal
+          onClose={() => setShowAuth(false)}
+          onEmail={() => setShowAuth(false)}
+          onApple={() => setShowAuth(false)}
+          onGoogle={() => setShowAuth(false)}
+        />
+      )}
     </div>
   )
 }
