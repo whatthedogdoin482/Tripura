@@ -6,14 +6,18 @@ import {
   Wallet, 
   Calendar, 
   User,
+  LogIn,
   Menu,
   X
 } from 'lucide-react';
 import TripuraLogo from '@/components/TripuraLogo';
+import { AuthButton } from '@/components/AuthButton';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NavigationProps {
   currentView?: string;
   onViewChange?: (view: string) => void;
+  onOpenAuth?: (mode: 'login' | 'register') => void;
 }
 
 const navItems = [
@@ -24,9 +28,10 @@ const navItems = [
   { id: 'profile', label: 'Profil', icon: User },
 ];
 
-export function Navigation({ currentView = 'home', onViewChange }: NavigationProps) {
+export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isLoggedIn, user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,22 +63,32 @@ export function Navigation({ currentView = 'home', onViewChange }: NavigationPro
 
             {/* Desktop nav items */}
             <div className="hidden md:flex items-center gap-1">
-              {navItems.map((item) => (
-                <motion.button
-                  key={item.id}
-                  onClick={() => onViewChange?.(item.id)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
-                    currentView === item.id
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <item.icon className="w-4 h-4" />
-                  <span className="text-sm font-medium">{item.label}</span>
-                </motion.button>
-              ))}
+              {navItems.map((item) =>
+                item.id === 'profile' ? (
+                  <AuthButton
+                    key={item.id}
+                    variant="nav"
+                    onOpenAuth={onOpenAuth}
+                    onNavigateToProfile={() => onViewChange?.('profile')}
+                    isActive={currentView === 'profile'}
+                  />
+                ) : (
+                  <motion.button
+                    key={item.id}
+                    onClick={() => onViewChange?.(item.id)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+                      currentView === item.id
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </motion.button>
+                )
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -103,26 +118,44 @@ export function Navigation({ currentView = 'home', onViewChange }: NavigationPro
             className="fixed inset-x-0 top-20 z-40 px-4 md:hidden"
           >
             <div className="glass-card rounded-3xl p-4 space-y-2">
-              {navItems.map((item, index) => (
-                <motion.button
-                  key={item.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => {
-                    onViewChange?.(item.id);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                    currentView === item.id
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </motion.button>
-              ))}
+              {navItems.map((item, index) =>
+                item.id === 'profile' ? (
+                  <div key={item.id} className="pt-2">
+                    <AuthButton
+                      variant="nav"
+                      onOpenAuth={(mode) => {
+                        onOpenAuth?.(mode);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      onNavigateToProfile={() => {
+                        onViewChange?.('profile');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      isActive={currentView === 'profile'}
+                      className="w-full justify-start px-4 py-3 rounded-xl !gap-3"
+                    />
+                  </div>
+                ) : (
+                  <motion.button
+                    key={item.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => {
+                      onViewChange?.(item.id);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                      currentView === item.id
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </motion.button>
+                )
+              )}
             </div>
           </motion.div>
         )}
@@ -136,21 +169,47 @@ export function Navigation({ currentView = 'home', onViewChange }: NavigationPro
       >
         <div className="glass-card rounded-3xl px-4 py-3">
           <div className="flex items-center justify-around">
-            {navItems.slice(0, 5).map((item) => (
-              <motion.button
-                key={item.id}
-                onClick={() => onViewChange?.(item.id)}
-                whileTap={{ scale: 0.9 }}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
-                  currentView === item.id
-                    ? 'text-blue-600'
-                    : 'text-gray-500'
-                }`}
-              >
-                <item.icon className={`w-5 h-5 ${currentView === item.id ? 'fill-current' : ''}`} />
-                <span className="text-xs font-medium">{item.label}</span>
-              </motion.button>
-            ))}
+            {navItems.slice(0, 5).map((item) =>
+              item.id === 'profile' ? (
+                <motion.button
+                  key={item.id}
+                  onClick={() =>
+                    isLoggedIn ? onViewChange?.('profile') : onOpenAuth?.('login')
+                  }
+                  whileTap={{ scale: 0.9 }}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+                    currentView === item.id ? 'text-blue-600' : 'text-gray-500'
+                  }`}
+                >
+                  {isLoggedIn && user?.profileImageUrl ? (
+                    <img
+                      src={user.profileImageUrl}
+                      alt="Profil"
+                      className="w-5 h-5 rounded-full object-cover"
+                    />
+                  ) : isLoggedIn ? (
+                    <User className={`w-5 h-5 ${currentView === item.id ? 'fill-current' : ''}`} />
+                  ) : (
+                    <LogIn className={`w-5 h-5 ${currentView === item.id ? 'fill-current' : ''}`} />
+                  )}
+                  <span className="text-xs font-medium">
+                    {!isLoggedIn ? 'Log in' : item.label}
+                  </span>
+                </motion.button>
+              ) : (
+                <motion.button
+                  key={item.id}
+                  onClick={() => onViewChange?.(item.id)}
+                  whileTap={{ scale: 0.9 }}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+                    currentView === item.id ? 'text-blue-600' : 'text-gray-500'
+                  }`}
+                >
+                  <item.icon className={`w-5 h-5 ${currentView === item.id ? 'fill-current' : ''}`} />
+                  <span className="text-xs font-medium">{item.label}</span>
+                </motion.button>
+              )
+            )}
           </div>
         </div>
       </motion.nav>

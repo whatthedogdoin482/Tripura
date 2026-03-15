@@ -17,12 +17,14 @@ const InteractiveBackgroundMap = dynamic(
   }
 );
 import { mockActivities, mockRestaurants } from '@/data/mockData';
+import { AuthButton } from '@/components/AuthButton';
 
 interface HeroSectionProps {
   onStartPlanning: () => void;
+  onOpenAuth?: (mode: 'login' | 'register') => void;
 }
 
-export function HeroSection({ onStartPlanning }: HeroSectionProps) {
+export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
   const { latitude, longitude, isLoading } = useGeolocation({ watch: false });
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng]);
@@ -54,6 +56,9 @@ export function HeroSection({ onStartPlanning }: HeroSectionProps) {
       ref={containerRef}
       className="relative min-h-screen w-full overflow-hidden"
     >
+      {/* Log-in Button oben rechts */}
+      <AuthButton variant="hero" onOpenAuth={onOpenAuth} />
+
       {/* Background Map */}
       <motion.div
         style={{ scale: mapScale, opacity: mapOpacity }}

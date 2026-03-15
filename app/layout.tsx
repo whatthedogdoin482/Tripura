@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import AppShell from '@/components/AppShell'
+import { Providers } from '@/components/Providers'
 
 export const metadata: Metadata = {
   title: 'Tripura – Dein Urlaubsplaner',
@@ -35,7 +36,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Tripura" />
       </head>
       <body className="antialiased" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-        <AppShell>{children}</AppShell>
+        <Providers>
+          <AppShell>{children}</AppShell>
+        </Providers>
       </body>
     </html>
   )
