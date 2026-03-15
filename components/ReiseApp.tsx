@@ -166,6 +166,7 @@ function ReiseAppContent() {
           <AuthModal
             mode={authModal}
             onClose={handleCloseAuth}
+            onSwitchMode={setAuthModal}
             onEmail={handleAuthEmail}
             onApple={handleAuthEmail}
             onGoogle={handleAuthEmail}

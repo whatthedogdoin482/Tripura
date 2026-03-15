@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, LogIn, UserPlus, LogOut, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -80,17 +79,19 @@ export function AuthButton({
                     <User className="w-4 h-4" />
                   </div>
                 )}
-                <span
-                  className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm cursor-pointer hover:bg-gray-50"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddPhoto();
-                  }}
-                  title="Profilbild hinzufügen"
-                  aria-label="Profilbild hinzufügen"
-                >
-                  <Plus className="w-2.5 h-2.5 text-gray-600" />
-                </span>
+                {isActive && (
+                  <span
+                    className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm cursor-pointer hover:bg-gray-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddPhoto();
+                    }}
+                    title="Profilbild hinzufügen"
+                    aria-label="Profilbild hinzufügen"
+                  >
+                    <Plus className="w-2.5 h-2.5 text-gray-600" />
+                  </span>
+                )}
               </div>
               <span className="hidden sm:inline">Profil</span>
             </motion.button>
@@ -205,22 +206,22 @@ export function AuthButton({
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
             }}
           >
-            <Link
-              href="/login"
-              onClick={() => setIsOpen(false)}
+            <button
+              type="button"
+              onClick={() => { onOpenAuth?.('login'); setIsOpen(false); }}
               className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-gray-800 hover:bg-gray-100 rounded-t-xl text-sm font-medium"
             >
               <LogIn className="w-4 h-4" />
               Log in
-            </Link>
-            <Link
-              href="/register"
-              onClick={() => setIsOpen(false)}
+            </button>
+            <button
+              type="button"
+              onClick={() => { onOpenAuth?.('register'); setIsOpen(false); }}
               className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-gray-800 hover:bg-gray-100 rounded-b-xl text-sm font-medium"
             >
               <UserPlus className="w-4 h-4" />
               Registrieren
-            </Link>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
