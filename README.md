@@ -17,6 +17,7 @@ A modern web application for planning vacations with AI-powered route planning, 
 - **Styling**: Tailwind CSS, Framer Motion
 - **Maps**: Google Maps JavaScript API
 - **Database & Auth**: Supabase (PostgreSQL, Auth, Realtime)
+- **Payments**: Stripe (Checkout, Webhooks)
 - **PWA**: Next-PWA for app store deployment
 - **Icons**: Lucide React
 
@@ -100,6 +101,14 @@ Required variables:
 - **Client Components**: `import { createClient } from '@/lib/supabase/client'`
 - **Server Components / Actions / Route Handlers**: `import { createClient } from '@/lib/supabase/server'` (use `await createClient()`)
 - **Auth**: Use `supabase.auth.signInWithPassword()`, `supabase.auth.getUser()`, etc. For protected server logic, use `supabase.auth.getUser()` (or `getSession()` on the client).
+
+### Using Stripe
+
+- **Checkout (redirect)**: `POST /api/stripe/checkout-session` with body `{ priceId?: string, amount?: number, name?: string, clientReferenceId?: string }`. Returns `{ url }`; redirect the user to `url` for Stripe Checkout.
+- **Client**: `import { getStripeClient } from '@/lib/stripe/client'` then `const stripe = await getStripeClient()` for Stripe.js (e.g. Payment Element, confirmPayment).
+- **Server**: `import { getStripeServer } from '@/lib/stripe/server'` in API routes or Server Actions.
+- **Webhooks**: Add endpoint in [Stripe Dashboard](https://dashboard.stripe.com/webhooks) → `https://your-domain.com/api/stripe/webhook`. Handle `checkout.session.completed` and others in `app/api/stripe/webhook/route.ts`.
+- **Success/cancel**: Users are redirected to `/payment/success` and `/payment/cancel` after Checkout (configurable via API body).
 
 ## Project Structure
 
