@@ -1,70 +1,112 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react';
 
 interface GeolocationState {
-  location: { lat: number; lng: number } | null
-  error: string | null
-  isLoading: boolean
+  position: GeolocationPosition | null;
+  error: GeolocationPositionError | null;
+  isLoading: boolean;
+  isSupported: boolean;
 }
 
-export function useGeolocation() {
+interface UseGeolocationOptions {
+  enableHighAccuracy?: boolean;
+  timeout?: number;
+  maximumAge?: number;
+  watch?: boolean;
+}
+
+export function useGeolocation(options: UseGeolocationOptions = {}) {
+  const {
+    enableHighAccuracy = true,
+    timeout = 10000,
+    maximumAge = 0,
+    watch = false,
+  } = options;
+
   const [state, setState] = useState<GeolocationState>({
-    location: null,
+    position: null,
     error: null,
     isLoading: true,
-  })
+    isSupported: false,
+  });
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setState({
-        location: null,
-        error: 'Geolocation is not supported by your browser',
+    setState((prev) => ({
+      ...prev,
+      isSupported: typeof navigator !== 'undefined' && 'geolocation' in navigator,
+    }));
+  }, []);
+
+  const handleSuccess = useCallback((position: GeolocationPosition) => {
+    setState((prev) => ({
+      ...prev,
+      position,
+      error: null,
+      isLoading: false,
+    }));
+  }, []);
+
+  const handleError = useCallback((error: GeolocationPositionError) => {
+    setState((prev) => ({
+      ...prev,
+      error,
+      isLoading: false,
+    }));
+  }, []);
+
+  const getPosition = useCallback(() => {
+    if (!state.isSupported) {
+      setState((prev) => ({
+        ...prev,
+        error: {
+          code: 0,
+          message: 'Geolocation is not supported by this browser',
+        } as GeolocationPositionError,
         isLoading: false,
-      })
-      return
+      }));
+      return;
     }
 
+    setState((prev) => ({ ...prev, isLoading: true }));
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setState({
-          location: {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          },
-          error: null,
-          isLoading: false,
-        })
-      },
-      (error) => {
-        let errorMessage = 'Unable to retrieve your location'
-        
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Location access denied. Please enable location permissions.'
-            break
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information is unavailable.'
-            break
-          case error.TIMEOUT:
-            errorMessage = 'Location request timed out.'
-            break
-        }
+      handleSuccess,
+      handleError,
+      { enableHighAccuracy, timeout, maximumAge }
+    );
+  }, [state.isSupported, enableHighAccuracy, timeout, maximumAge, handleSuccess, handleError]);
 
-        setState({
-          location: null,
-          error: errorMessage,
-          isLoading: false,
-        })
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
-    )
-  }, [])
+  useEffect(() => {
+    if (!state.isSupported) {
+      setState((prev) => ({ ...prev, isLoading: false }));
+      return;
+    }
 
-  return state
+    if (watch) {
+      const watchId = navigator.geolocation.watchPosition(
+        handleSuccess,
+        handleError,
+        { enableHighAccuracy, timeout, maximumAge }
+      );
+
+      return () => {
+        navigator.geolocation.clearWatch(watchId);
+      };
+    } else {
+      getPosition();
+    }
+  }, [watch, enableHighAccuracy, timeout, maximumAge, state.isSupported, handleSuccess, handleError, getPosition]);
+
+  return {
+    ...state,
+    latitude: state.position?.coords.latitude ?? null,
+    longitude: state.position?.coords.longitude ?? null,
+    accuracy: state.position?.coords.accuracy ?? null,
+    refresh: getPosition,
+  };
 }
 
+// Default location (Paris) for demo purposes
+export const DEFAULT_LOCATION = {
+  lat: 48.8566,
+  lng: 2.3522,
+};

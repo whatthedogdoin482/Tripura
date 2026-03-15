@@ -10,8 +10,10 @@ import {
   type PreferenceProfile,
   type InterestFlag,
   type SliderValues,
-  type PairChoices,
 } from '@/lib/preferences'
+
+/** User choice per pair: left or right (matches lib/preferences PairChoices). */
+type PairChoices = Record<string, 'left' | 'right'>
 
 export interface OnboardingEngineProps {
   onComplete: () => void

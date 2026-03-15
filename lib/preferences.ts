@@ -56,6 +56,17 @@ export interface SliderValues {
   [key: string]: number
 }
 
+/** User choice per pair: left or right option. */
+export type PairChoices = Record<string, 'left' | 'right'>
+
+/** Single preference pair (two options with images). */
+export interface PreferencePair {
+  id: string
+  question: string
+  left: { id: string; title: string; subtitle: string; image: string }
+  right: { id: string; title: string; subtitle: string; image: string }
+}
+
 export interface PreferenceProfile {
   interests: InterestFlag
   sliders: SliderValues

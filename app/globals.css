@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 * {
   box-sizing: border-box;
   padding: 0;
@@ -71,6 +69,108 @@ a {
   );
   min-height: 100vh;
   color: #BBE1FA;
+}
+
+/* Bereich unter dem Hero: weißer Hintergrund, nur Straßen dezent sichtbar (Karten-Hintergrund weg) */
+.below-hero-content {
+  position: relative;
+  background-color: #ffffff;
+  min-height: 50vh;
+}
+.below-hero-content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: #ffffff;
+  background-image: url('https://a.basemaps.cartocdn.com/light_all/13/2096/1399.png');
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  opacity: 0.07;
+}
+.below-hero-content > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Apple-Style Buttons (Standard: hell, für Planen/Buchungen etc.) */
+.apple-button {
+  background: #ffffff;
+  color: #1d1d1f;
+  border-radius: 980px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.apple-button:hover {
+  background: #f5f5f7;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.apple-button:active {
+  transform: scale(0.98);
+}
+.apple-button-secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 980px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  backdrop-filter: blur(10px);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+.apple-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+.apple-button-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Hero: weiße Buttons (nur Landing) – kein Grau */
+.hero-cta-primary {
+  background: #ffffff;
+  color: #1d1d1f;
+  border-radius: 980px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.hero-cta-primary:hover {
+  background: #f5f5f7;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+.hero-cta-primary:active {
+  transform: scale(0.98);
+}
+.hero-cta-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 980px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  backdrop-filter: blur(10px);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+.hero-cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+.hero-cta-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Reise-App: Glassmorphism (aus ZIP-Projekt) */
+.glass-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
 /* Hauptüberschriften: Reverse-Gradient (hell an den Rändern, dunkel in der Mitte – spiegelbildlich zum Hintergrund) */

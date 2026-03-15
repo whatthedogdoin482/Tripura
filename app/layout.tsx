@@ -1,9 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import AppShell from '@/components/AppShell'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Tripura – Dein Urlaubsplaner',
@@ -12,8 +9,8 @@ export const metadata: Metadata = {
   authors: [{ name: 'Tripura Team' }],
   manifest: '/manifest.json',
   icons: {
-    icon: '/icon-192x192.png',
-    apple: '/icon-192x192.png',
+    icon: '/logo.PNG',
+    apple: '/logo.PNG',
   },
 }
 
@@ -37,7 +34,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Tripura" />
       </head>
-      <body className={inter.className}>
+      <body className="antialiased" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
         <AppShell>{children}</AppShell>
       </body>
     </html>
