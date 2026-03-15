@@ -100,7 +100,8 @@ export function AuthButton({
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="absolute right-0 top-full mt-2 py-1 min-w-[160px] rounded-xl glass-card shadow-lg z-50"
+                  onMouseEnter={() => setProfileMenuOpen(true)}
+                  className="absolute right-0 top-full pt-2 py-1 min-w-[160px] rounded-xl glass-card shadow-lg z-50"
                 >
                   <button
                     type="button"
@@ -146,7 +147,8 @@ export function AuthButton({
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="absolute right-0 top-full mt-2 py-1 min-w-[160px] rounded-xl glass-card shadow-lg z-50"
+                  onMouseEnter={() => setIsOpen(true)}
+                  className="absolute right-0 top-full pt-2 py-1 min-w-[160px] rounded-xl glass-card shadow-lg z-50"
                 >
                   <button
                     type="button"
@@ -173,7 +175,7 @@ export function AuthButton({
     );
   }
 
-  // Hero: immer "Log in" Button, Hover zeigt Log in / Registrieren
+  // Hero: immer "Log in" Button, Hover zeigt Log in / Registrieren (pt-2 statt mt-2 = keine Lücke, Menü bleibt beim Bewegen der Maus offen)
   return (
     <div
       className={`absolute top-6 right-4 sm:right-6 z-30 ${className}`}
@@ -194,7 +196,8 @@ export function AuthButton({
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="absolute right-0 top-full mt-2 py-1 min-w-[160px] rounded-xl shadow-lg z-50 overflow-hidden"
+            onMouseEnter={() => setIsOpen(true)}
+            className="absolute right-0 top-full pt-2 py-1 min-w-[160px] rounded-xl shadow-lg z-50 overflow-hidden"
             style={{
               background: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(12px)',
