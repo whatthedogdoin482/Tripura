@@ -16,6 +16,7 @@ A modern web application for planning vacations with AI-powered route planning, 
 - **Frontend**: Next.js 14, React 18, TypeScript
 - **Styling**: Tailwind CSS, Framer Motion
 - **Maps**: Google Maps JavaScript API
+- **Database & Auth**: Supabase (PostgreSQL, Auth, Realtime)
 - **PWA**: Next-PWA for app store deployment
 - **Icons**: Lucide React
 
@@ -45,10 +46,7 @@ npm install
 cp .env.example .env.local
 ```
 
-4. Add your Google Maps API key to `.env.local`:
-```
-GOOGLE_MAPS_API_KEY=your_api_key_here
-```
+4. Add your keys to `.env.local` (see Environment Variables below).
 
 5. Run the development server:
 ```bash
@@ -82,12 +80,26 @@ The app is configured as a PWA and can be installed on:
 
 ## Environment Variables
 
-Create a `.env.local` file with:
+Copy the example file and fill in your values:
 
-```env
-GOOGLE_MAPS_API_KEY=your_google_maps_api_key
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+```bash
+cp .env.example .env.local
 ```
+
+Required variables:
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps API key for map components |
+| `NEXT_PUBLIC_APP_URL` | App URL (e.g. `http://localhost:3000`) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (from [Dashboard](https://supabase.com/dashboard) → Project Settings → API) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key (same place as URL; safe to expose in the browser) |
+
+### Using Supabase
+
+- **Client Components**: `import { createClient } from '@/lib/supabase/client'`
+- **Server Components / Actions / Route Handlers**: `import { createClient } from '@/lib/supabase/server'` (use `await createClient()`)
+- **Auth**: Use `supabase.auth.signInWithPassword()`, `supabase.auth.getUser()`, etc. For protected server logic, use `supabase.auth.getUser()` (or `getSession()` on the client).
 
 ## Project Structure
 
