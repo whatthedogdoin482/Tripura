@@ -2,14 +2,18 @@
 
 import { motion } from 'framer-motion'
 
+export type AuthModalMode = 'login' | 'register'
+
 export interface AuthModalProps {
+  mode?: AuthModalMode
   onClose: () => void
   onEmail?: () => void
   onApple?: () => void
   onGoogle?: () => void
 }
 
-export default function AuthModal({ onClose, onEmail, onApple, onGoogle }: AuthModalProps) {
+export default function AuthModal({ mode = 'login', onClose, onEmail, onApple, onGoogle }: AuthModalProps) {
+  const isRegister = mode === 'register'
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -37,13 +41,13 @@ export default function AuthModal({ onClose, onEmail, onApple, onGoogle }: AuthM
             className="text-xl font-black text-center mb-2"
             style={{ color: '#BBE1FA' }}
           >
-            Anmelden
+            {isRegister ? 'Registrieren' : 'Anmelden'}
           </h2>
           <p
             className="text-sm font-bold text-center mb-8"
             style={{ color: 'rgba(187, 225, 250, 0.9)' }}
           >
-            Speichere Reisen, buche und nutze alle Features.
+            {isRegister ? 'Erstelle dein Konto und plane deine nächste Reise.' : 'Speichere Reisen, buche und nutze alle Features.'}
           </p>
           <div className="space-y-3">
             <button

@@ -12,11 +12,16 @@ import { WeatherSection } from '@/components/sections/WeatherSection';
 import { BookingSection } from '@/components/sections/BookingSection';
 import { Footer } from '@/components/sections/Footer';
 import TripuraLogo from '@/components/TripuraLogo';
+import AuthModal from '@/components/AuthModal';
+import { useAuth } from '@/contexts/AuthContext';
 import type { AppView } from '@/types';
+import type { AuthModalMode } from '@/components/AuthModal';
 
-export default function ReiseApp() {
+function ReiseAppContent() {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [isLoading, setIsLoading] = useState(true);
+  const [authModal, setAuthModal] = useState<AuthModalMode | null>(null);
+  const { login, user } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1500);
@@ -25,12 +30,22 @@ export default function ReiseApp() {
 
   const handlePlanningComplete = () => setCurrentView('explore');
 
+  const handleOpenAuth = (mode: AuthModalMode) => setAuthModal(mode);
+  const handleCloseAuth = () => setAuthModal(null);
+  const handleAuthEmail = () => {
+    login();
+    setAuthModal(null);
+  };
+
   const renderView = () => {
     switch (currentView) {
       case 'home':
         return (
           <>
-            <HeroSection onStartPlanning={() => setCurrentView('plan')} />
+            <HeroSection
+              onStartPlanning={() => setCurrentView('plan')}
+              onOpenAuth={handleOpenAuth}
+            />
             <div className="below-hero-content">
               <FeaturesSection />
               <BookingSection />
@@ -70,11 +85,26 @@ export default function ReiseApp() {
               <h1 className="text-4xl font-bold text-gray-900 mb-8">Dein Profil</h1>
               <div className="bg-white rounded-3xl shadow-xl p-8">
                 <div className="flex items-center gap-6 mb-8">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">
-                    JD
-                  </div>
+                  {user?.profileImageUrl ? (
+                    <img
+                      src={user.profileImageUrl}
+                      alt="Profil"
+                      className="w-24 h-24 rounded-full object-cover border-2 border-gray-100 shadow-md"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">
+                      {(user?.displayName ?? 'Gast')
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2) || '?'}
+                    </div>
+                  )}
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">John Doe</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {user?.displayName ?? 'Gast'}
+                    </h2>
                     <p className="text-gray-500">Reise-Enthusiast seit 2020</p>
                   </div>
                 </div>
@@ -126,7 +156,22 @@ export default function ReiseApp() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation currentView={currentView} onViewChange={(view) => setCurrentView(view as AppView)} />
+      <Navigation
+        currentView={currentView}
+        onViewChange={(view) => setCurrentView(view as AppView)}
+        onOpenAuth={handleOpenAuth}
+      />
+      <AnimatePresence>
+        {authModal && (
+          <AuthModal
+            mode={authModal}
+            onClose={handleCloseAuth}
+            onEmail={handleAuthEmail}
+            onApple={handleAuthEmail}
+            onGoogle={handleAuthEmail}
+          />
+        )}
+      </AnimatePresence>
       <main className="relative">
         <AnimatePresence mode="wait">
           <motion.div
@@ -143,4 +188,8 @@ export default function ReiseApp() {
       <Footer />
     </div>
   );
+}
+
+export default function ReiseApp() {
+  return <ReiseAppContent />;
 }
