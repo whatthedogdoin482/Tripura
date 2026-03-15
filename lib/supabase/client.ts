@@ -2,7 +2,7 @@ import { createBrowserClient } from '@supabase/ssr'
 
 /**
  * Supabase client for use in Client Components (browser).
- * Uses a singleton pattern under the hood.
+ * Nur aufrufen, wenn NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_ANON_KEY gesetzt sind.
  */
 export function createClient() {
   return createBrowserClient(

@@ -1,0 +1,31 @@
+# Supabase – Login & Profil
+
+## Tabelle `profiles` (Login-Daten) anlegen
+
+1. Im [Supabase Dashboard](https://supabase.com/dashboard) dein Projekt öffnen.
+2. **SQL Editor** → **New query**.
+3. Inhalt von `migrations/20250316000000_create_profiles.sql` einfügen und ausführen.
+
+Damit wird erstellt:
+
+- **Tabelle `public.profiles`**: `id`, `email`, `display_name`, `avatar_url`, `created_at`, `updated_at`
+- Verknüpfung mit `auth.users` (Supabase Auth)
+- RLS-Policies (Nutzer sehen/ändern nur eigenes Profil)
+- Trigger: Neuer Auth-User bekommt automatisch einen Profil-Eintrag
+
+## Umgebungsvariablen
+
+In `.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://dein-projekt.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=dein-anon-key
+```
+
+Ohne diese Variablen läuft die App mit **Demo-Login** (localStorage).
+
+## Auth-Flow
+
+- **E-Mail**: Magic Link (Supabase `signInWithOtp`) → Nutzer klickt Link und ist eingeloggt.
+- **Google / Apple**: OAuth über Supabase (Provider im Dashboard aktivieren).
+- Nach dem Login wird das Profil aus `public.profiles` gelesen; Avatar-Updates werden dort gespeichert.
