@@ -22,7 +22,13 @@ NEXT_PUBLIC_SUPABASE_URL=https://dein-projekt.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=dein-anon-key
 ```
 
-Ohne diese Variablen läuft die App mit **Demo-Login** (localStorage).
+**Nach dem Anlegen der Tabelle `profiles`** (Migration ausgeführt) zusätzlich setzen, damit Profil-Daten aus der Tabelle gelesen/geschrieben werden (keine 404 mehr):
+
+```
+NEXT_PUBLIC_SUPABASE_PROFILES_ENABLED=true
+```
+
+Ohne diese Variablen läuft die App mit **Demo-Login** (localStorage). Ohne `PROFILES_ENABLED` werden nur Auth-Daten genutzt, keine Profil-Tabelle.
 
 ## Auth-Flow
 

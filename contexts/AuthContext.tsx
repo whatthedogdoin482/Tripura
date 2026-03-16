@@ -30,6 +30,8 @@ interface AuthContextValue {
   setProfileImage: (url: string | null) => Promise<void>;
 }
 
+const AuthContext = createContext<AuthContextValue | null>(null);
+
 const defaultDisplayName = 'Nutzer';
 
 function profileToAuthUser(p: Profile | null): AuthUser | null {
@@ -48,6 +50,13 @@ function hasSupabaseConfig(): boolean {
     !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 }
 
+/** Auf true setzen, sobald die Migration für `profiles` ausgeführt wurde – verhindert 404 solange die Tabelle fehlt. */
+const USE_PROFILES_TABLE = false;
+
+function useProfilesTable(): boolean {
+  return USE_PROFILES_TABLE && process.env.NEXT_PUBLIC_SUPABASE_PROFILES_ENABLED === 'true';
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<{
     isLoggedIn: boolean;
@@ -56,14 +65,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }>({ isLoggedIn: false, user: null, isLoading: true });
 
   const fetchProfile = useCallback(async (userId: string): Promise<AuthUser | null> => {
-    if (!hasSupabaseConfig()) return null;
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, email, display_name, avatar_url, created_at, updated_at')
-      .eq('id', userId)
-      .single();
-    return profileToAuthUser(data as Profile | null);
+    if (!hasSupabaseConfig() || !useProfilesTable()) return null;
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, display_name, avatar_url, created_at, updated_at')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) return null;
+      return profileToAuthUser(data as Profile | null);
+    } catch {
+      return null;
+    }
   }, []);
 
   const syncSession = useCallback(async () => {
@@ -207,9 +221,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setProfileImage = useCallback(async (url: string | null) => {
     const uid = state.user?.id;
-    if (hasSupabaseConfig() && uid) {
-      const supabase = createClient();
-      await supabase.from('profiles').update({ avatar_url: url, updated_at: new Date().toISOString() }).eq('id', uid);
+    if (hasSupabaseConfig() && useProfilesTable() && uid) {
+      try {
+        const supabase = createClient();
+        await supabase.from('profiles').update({ avatar_url: url, updated_at: new Date().toISOString() }).eq('id', uid);
+      } catch {
+        if (typeof window !== 'undefined') {
+          try {
+            if (url) localStorage.setItem(PROFILE_IMAGE_KEY, url);
+            else localStorage.removeItem(PROFILE_IMAGE_KEY);
+          } catch (_) {}
+        }
+      }
     } else if (typeof window !== 'undefined') {
       try {
         if (url) localStorage.setItem(PROFILE_IMAGE_KEY, url);
