@@ -2,13 +2,16 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /**
- * Creates a Supabase client for use in Next.js middleware.
- * Refreshes the session and sets cookies on the response so auth state stays in sync.
+ * Refreshes Supabase session in middleware when env is set; otherwise passes through.
  */
 export async function updateSession(request: NextRequest) {
   const response = NextResponse.next({
     request,
   })
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return response
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

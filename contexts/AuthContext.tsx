@@ -1,96 +1,257 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import type { Profile } from '@/lib/supabase/types';
 
 const STORAGE_KEY = 'tripura-auth';
 const PROFILE_IMAGE_KEY = 'tripura-profile-image';
 
 export interface AuthUser {
+  id: string;
   displayName: string;
+  email: string | null;
   profileImageUrl: string | null;
 }
 
 interface AuthContextValue {
   isLoggedIn: boolean;
   user: AuthUser | null;
+  isLoading: boolean;
+  /** E-Mail-Link anfordern (Supabase Magic Link) */
+  loginWithEmail: (email: string) => Promise<{ error: Error | null }>;
+  /** Mit Google anmelden (Supabase OAuth) */
+  loginWithGoogle: () => Promise<{ error: Error | null }>;
+  /** Mit Apple anmelden (Supabase OAuth) */
+  loginWithApple: () => Promise<{ error: Error | null }>;
+  /** Demo-Login ohne Supabase (localStorage), wenn Supabase nicht konfiguriert ist */
   login: (displayName?: string) => void;
-  logout: () => void;
-  setProfileImage: (url: string | null) => void;
+  logout: () => Promise<void>;
+  setProfileImage: (url: string | null) => Promise<void>;
 }
-
-const defaultUser: AuthUser = {
-  displayName: 'John Doe',
-  profileImageUrl: null,
-};
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function loadStoredAuth(): { isLoggedIn: boolean; user: AuthUser | null } {
-  if (typeof window === 'undefined') return { isLoggedIn: false, user: null };
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const imageUrl = localStorage.getItem(PROFILE_IMAGE_KEY);
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (data.isLoggedIn) {
-        return {
-          isLoggedIn: true,
-          user: {
-            displayName: data.displayName ?? defaultUser.displayName,
-            profileImageUrl: imageUrl || null,
-          },
-        };
-      }
-    }
-  } catch (_) {}
-  return { isLoggedIn: false, user: null };
+const defaultDisplayName = 'Nutzer';
+
+function profileToAuthUser(p: Profile | null): AuthUser | null {
+  if (!p) return null;
+  return {
+    id: p.id,
+    displayName: p.display_name ?? defaultDisplayName,
+    email: p.email ?? null,
+    profileImageUrl: p.avatar_url ?? null,
+  };
 }
 
-function imageUrlFromStorage(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(PROFILE_IMAGE_KEY);
+function hasSupabaseConfig(): boolean {
+  return typeof window !== 'undefined' &&
+    !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+}
+
+/** Auf true setzen, sobald die Migration für `profiles` ausgeführt wurde – verhindert 404 solange die Tabelle fehlt. */
+const USE_PROFILES_TABLE = false;
+
+function useProfilesTable(): boolean {
+  return USE_PROFILES_TABLE && process.env.NEXT_PUBLIC_SUPABASE_PROFILES_ENABLED === 'true';
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ isLoggedIn: boolean; user: AuthUser | null }>(() => loadStoredAuth());
+  const [state, setState] = useState<{
+    isLoggedIn: boolean;
+    user: AuthUser | null;
+    isLoading: boolean;
+  }>({ isLoggedIn: false, user: null, isLoading: true });
+
+  const fetchProfile = useCallback(async (userId: string): Promise<AuthUser | null> => {
+    if (!hasSupabaseConfig() || !useProfilesTable()) return null;
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, display_name, avatar_url, created_at, updated_at')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) return null;
+      return profileToAuthUser(data as Profile | null);
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const syncSession = useCallback(async () => {
+    if (!hasSupabaseConfig()) {
+      setState({ isLoggedIn: false, user: null, isLoading: false });
+      return;
+    }
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      setState({ isLoggedIn: false, user: null, isLoading: false });
+      return;
+    }
+    const user = await fetchProfile(session.user.id);
+    setState({
+      isLoggedIn: true,
+      user: user ?? {
+        id: session.user.id,
+        displayName: session.user.user_metadata?.full_name ?? session.user.email?.split('@')[0] ?? defaultDisplayName,
+        email: session.user.email ?? null,
+        profileImageUrl: session.user.user_metadata?.avatar_url ?? null,
+      },
+      isLoading: false,
+    });
+  }, [fetchProfile]);
 
   useEffect(() => {
-    const stored = loadStoredAuth();
-    setState(stored);
+    if (!hasSupabaseConfig()) {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const imageUrl = localStorage.getItem(PROFILE_IMAGE_KEY);
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data.isLoggedIn) {
+            setState({
+              isLoggedIn: true,
+              user: {
+                id: '',
+                displayName: data.displayName ?? defaultDisplayName,
+                email: null,
+                profileImageUrl: imageUrl || null,
+              },
+              isLoading: false,
+            });
+            return;
+          }
+        }
+      } catch (_) {}
+      setState({ isLoggedIn: false, user: null, isLoading: false });
+      return;
+    }
+
+    syncSession();
+
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchProfile(session.user.id).then((user) => {
+          setState({
+            isLoggedIn: true,
+            user: user ?? {
+              id: session.user.id,
+              displayName: session.user.user_metadata?.full_name ?? session.user.email?.split('@')[0] ?? defaultDisplayName,
+              email: session.user.email ?? null,
+              profileImageUrl: session.user.user_metadata?.avatar_url ?? null,
+            },
+            isLoading: false,
+          });
+        });
+      } else {
+        setState({ isLoggedIn: false, user: null, isLoading: false });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [syncSession, fetchProfile]);
+
+  const loginWithEmail = useCallback(async (email: string): Promise<{ error: Error | null }> => {
+    if (!hasSupabaseConfig()) {
+      login(email.split('@')[0]);
+      return { error: null };
+    }
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
+    });
+    return { error: error ?? null };
+  }, []);
+
+  const loginWithGoogle = useCallback(async (): Promise<{ error: Error | null }> => {
+    if (!hasSupabaseConfig()) {
+      login();
+      return { error: null };
+    }
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
+    });
+    return { error: error ?? null };
+  }, []);
+
+  const loginWithApple = useCallback(async (): Promise<{ error: Error | null }> => {
+    if (!hasSupabaseConfig()) {
+      login();
+      return { error: null };
+    }
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
+    });
+    return { error: error ?? null };
   }, []);
 
   const login = useCallback((displayName?: string) => {
+    if (hasSupabaseConfig()) return;
     const user: AuthUser = {
-      displayName: displayName ?? defaultUser.displayName,
-      profileImageUrl: imageUrlFromStorage(),
+      id: '',
+      displayName: displayName ?? defaultDisplayName,
+      email: null,
+      profileImageUrl: typeof window !== 'undefined' ? localStorage.getItem(PROFILE_IMAGE_KEY) : null,
     };
-    setState({ isLoggedIn: true, user });
+    setState({ isLoggedIn: true, user, isLoading: false });
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ isLoggedIn: true, displayName: user.displayName }));
     } catch (_) {}
   }, []);
 
-  const logout = useCallback(() => {
-    setState({ isLoggedIn: false, user: null });
+  const logout = useCallback(async () => {
+    if (hasSupabaseConfig()) {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    }
+    setState({ isLoggedIn: false, user: null, isLoading: false });
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch (_) {}
   }, []);
 
-  const setProfileImage = useCallback((url: string | null) => {
-    try {
-      if (url) localStorage.setItem(PROFILE_IMAGE_KEY, url);
-      else localStorage.removeItem(PROFILE_IMAGE_KEY);
-    } catch (_) {}
+  const setProfileImage = useCallback(async (url: string | null) => {
+    const uid = state.user?.id;
+    if (hasSupabaseConfig() && useProfilesTable() && uid) {
+      try {
+        const supabase = createClient();
+        await supabase.from('profiles').update({ avatar_url: url, updated_at: new Date().toISOString() }).eq('id', uid);
+      } catch {
+        if (typeof window !== 'undefined') {
+          try {
+            if (url) localStorage.setItem(PROFILE_IMAGE_KEY, url);
+            else localStorage.removeItem(PROFILE_IMAGE_KEY);
+          } catch (_) {}
+        }
+      }
+    } else if (typeof window !== 'undefined') {
+      try {
+        if (url) localStorage.setItem(PROFILE_IMAGE_KEY, url);
+        else localStorage.removeItem(PROFILE_IMAGE_KEY);
+      } catch (_) {}
+    }
     setState((prev) => {
       if (!prev.user) return prev;
       return { ...prev, user: { ...prev.user, profileImageUrl: url } };
     });
-  }, []);
+  }, [state.user?.id]);
 
   const value: AuthContextValue = {
     isLoggedIn: state.isLoggedIn,
     user: state.user,
+    isLoading: state.isLoading,
+    loginWithEmail,
+    loginWithGoogle,
+    loginWithApple,
     login,
     logout,
     setProfileImage,

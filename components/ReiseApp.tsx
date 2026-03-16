@@ -21,7 +21,7 @@ function ReiseAppContent() {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [isLoading, setIsLoading] = useState(true);
   const [authModal, setAuthModal] = useState<AuthModalMode | null>(null);
-  const { login, user } = useAuth();
+  const { login, loginWithEmail, loginWithGoogle, loginWithApple, user } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1500);
@@ -34,6 +34,15 @@ function ReiseAppContent() {
   const handleCloseAuth = () => setAuthModal(null);
   const handleAuthEmail = () => {
     login();
+    setAuthModal(null);
+  };
+  const handleEmailRequest = (email: string) => loginWithEmail(email);
+  const handleApple = async () => {
+    await loginWithApple();
+    setAuthModal(null);
+  };
+  const handleGoogle = async () => {
+    await loginWithGoogle();
     setAuthModal(null);
   };
 
@@ -168,8 +177,9 @@ function ReiseAppContent() {
             onClose={handleCloseAuth}
             onSwitchMode={setAuthModal}
             onEmail={handleAuthEmail}
-            onApple={handleAuthEmail}
-            onGoogle={handleAuthEmail}
+            onEmailRequest={handleEmailRequest}
+            onApple={handleApple}
+            onGoogle={handleGoogle}
           />
         )}
       </AnimatePresence>

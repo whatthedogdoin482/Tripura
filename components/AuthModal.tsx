@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, X } from 'lucide-react';
+import { Mail, X, CheckCircle } from 'lucide-react';
 
 export type AuthModalMode = 'login' | 'register';
 
@@ -10,7 +10,10 @@ export interface AuthModalProps {
   mode?: AuthModalMode;
   onClose: () => void;
   onSwitchMode?: (mode: AuthModalMode) => void;
+  /** Demo: sofort einloggen ohne E-Mail */
   onEmail?: () => void;
+  /** Supabase: E-Mail eingeben → Magic Link senden */
+  onEmailRequest?: (email: string) => Promise<{ error: Error | null }>;
   onApple?: () => void;
   onGoogle?: () => void;
 }
@@ -45,12 +48,17 @@ export default function AuthModal({
   onClose,
   onSwitchMode,
   onEmail,
+  onEmailRequest,
   onApple,
   onGoogle,
 }: AuthModalProps) {
   const isRegister = mode === 'register';
+  const [email, setEmail] = useState('');
+  const [showEmailInput, setShowEmailInput] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Hintergrund scrollt nicht, nur Popup-Inhalt
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -59,9 +67,30 @@ export default function AuthModal({
     };
   }, []);
 
-  const handleEmail = () => {
-    onEmail?.();
+  const handleEmailClick = () => {
+    if (onEmailRequest) {
+      setShowEmailInput(true);
+      setEmailSent(false);
+      setEmailError(null);
+    } else {
+      onEmail?.();
+    }
   };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onEmailRequest || !email.trim()) return;
+    setLoading(true);
+    setEmailError(null);
+    const { error } = await onEmailRequest(email.trim());
+    setLoading(false);
+    if (error) {
+      setEmailError(error.message);
+      return;
+    }
+    setEmailSent(true);
+  };
+
   const handleApple = () => {
     onApple?.();
   };
@@ -127,20 +156,61 @@ export default function AuthModal({
             </p>
 
             <div className="space-y-3">
-              <motion.button
-                type="button"
-                onClick={handleEmail}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl text-[0.9rem] font-semibold text-white"
-                style={{
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                  boxShadow: '0 4px 14px rgba(99, 102, 241, 0.3)',
-                }}
-              >
-                <Mail className="w-[18px] h-[18px]" />
-                Mit E-Mail {isRegister ? 'registrieren' : 'anmelden'}
-              </motion.button>
+              {showEmailInput ? (
+                <form onSubmit={handleEmailSubmit} className="space-y-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="E-Mail-Adresse"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                    required
+                    autoFocus
+                    disabled={emailSent}
+                  />
+                  {emailError && (
+                    <p className="text-xs text-red-600">{emailError}</p>
+                  )}
+                  {emailSent ? (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>Link gesendet – bitte E-Mail prüfen.</span>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { setShowEmailInput(false); setEmail(''); setEmailError(null); }}
+                        className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50"
+                      >
+                        Zurück
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-95 disabled:opacity-70"
+                      >
+                        {loading ? 'Wird gesendet…' : 'Link senden'}
+                      </button>
+                    </div>
+                  )}
+                </form>
+              ) : (
+                <motion.button
+                  type="button"
+                  onClick={handleEmailClick}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl text-[0.9rem] font-semibold text-white"
+                  style={{
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.3)',
+                  }}
+                >
+                  <Mail className="w-[18px] h-[18px]" />
+                  Mit E-Mail {isRegister ? 'registrieren' : 'anmelden'}
+                </motion.button>
+              )}
 
               <div className="flex items-center gap-3 my-2">
                 <div className="flex-1 h-px bg-gray-200" />
