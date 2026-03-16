@@ -20,14 +20,20 @@ export async function sendDevEmail(params: {
     throw new Error('Resend client not initialised – set RESEND_API_KEY in .env.local')
   }
 
-  const from = params.from ?? 'Tripura Dev <onboarding@example.dev>'
+  // Use Resend’s default verified sender by default.
+  // You can change this to your own verified domain in the Resend dashboard.
+  const from = params.from ?? 'onboarding@resend.dev'
 
-  return resend.emails.send({
+  // Cast to any to avoid strict over-narrowing of the Resend types –
+  // this matches the simple HTML/text email shape supported by the API.
+  const payload: any = {
     from,
     to: params.to,
     subject: params.subject,
     text: params.text,
     html: params.html,
-  })
+  }
+
+  return resend.emails.send(payload)
 }
 

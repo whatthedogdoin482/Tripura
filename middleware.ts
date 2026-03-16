@@ -1,19 +1,28 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { type NextRequest, NextResponse } from 'next/server'
+import { COOKIE_NAME, verifySession } from '@/lib/auth/jwt'
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  const token = request.cookies.get(COOKIE_NAME)?.value
+
+  if (token) {
+    const payload = verifySession(token)
+    if (!payload) {
+      // Invalid token → clear cookie
+      const response = NextResponse.next()
+      response.cookies.set(COOKIE_NAME, '', {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 0,
+      })
+      return response
+    }
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
