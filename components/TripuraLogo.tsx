@@ -44,7 +44,7 @@ export default function TripuraLogo({
         style={{ backgroundColor: '#1B262C' }}
       >
         <img
-          src="/logo.png"
+          src="/logo.PNG"
           alt="Tripura Logo"
           className="w-full h-full object-cover rounded-full"
         />
