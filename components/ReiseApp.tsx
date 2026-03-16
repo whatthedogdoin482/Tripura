@@ -162,7 +162,7 @@ function ReiseAppContent() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.4 }}
-          className="mt-8 text-2xl sm:text-3xl font-bold heading-reverse-gradient text-center"
+          className="mt-8 text-2xl sm:text-3xl font-bold heading-purple-gradient text-center"
         >
           Dein perfekter Trip wird vorbereitet
         </motion.h1>

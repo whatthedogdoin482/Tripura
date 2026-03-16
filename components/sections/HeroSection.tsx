@@ -80,8 +80,22 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
         }}
         aria-hidden
       />
-      {/* Leichter Gradient für Text-Lesbarkeit */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/40 z-[1] pointer-events-none" />
+      {/* Leichter Gradient für Text-Lesbarkeit – Map noch erkennbar, Text klar im Vordergrund */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/5 to-black/35 z-[1] pointer-events-none" />
+
+      {/* Weiche Blur-Maske genau im Überschneidungsbereich von Map-Labels und Hero-Text */}
+      <div
+        className="absolute inset-0 z-[2] pointer-events-none"
+        style={{
+          WebkitBackdropFilter: 'blur(4px)',
+          backdropFilter: 'blur(4px)',
+          WebkitMaskImage:
+            'radial-gradient(ellipse 22% 12% at 50% 45%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.95) 65%, transparent 100%)',
+          maskImage:
+            'radial-gradient(ellipse 22% 12% at 50% 45%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.95) 65%, transparent 100%)',
+        }}
+        aria-hidden
+      />
 
       {/* Weicher Übergang Map → Weiß: unten ausblenden, kein harter Cut beim Scrollen */}
       <div
@@ -96,7 +110,7 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
       {/* Content */}
       <motion.div
         style={{ y: contentY, opacity: contentOpacity }}
-        className="relative z-20 flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8"
+        className="relative z-30 flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8"
       >
         {/* Badge – transparentes Weiß, abgestimmt auf Buttons */}
         <motion.div
