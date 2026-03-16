@@ -35,6 +35,7 @@ interface PlanningSectionProps {
 
 export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const stepCardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
   
   const [currentStep, setCurrentStep] = useState<PlanningStep>('destination');
@@ -99,6 +100,16 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
       document.body.style.overflow = '';
     };
   }, [showRegionModal]);
+
+  // Beim Wechsel von Schritt/Frage nicht nach unten scrollen – Planungs-Karte oben halten
+  useEffect(() => {
+    const el = stepCardRef.current;
+    if (!el) return;
+    const id = requestAnimationFrame(() => {
+      el.scrollIntoView({ block: 'start', behavior: 'auto' });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [currentStep, currentQuestionIndex]);
 
   const toggleRegionCity = (country: string, cityName: string) => {
     setRegionSelections((prev) => {
@@ -1150,6 +1161,7 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
 
         {/* Planning card */}
         <motion.div
+          ref={stepCardRef}
           initial={{ opacity: 0, y: 50 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
           transition={{ duration: 0.8, delay: 0.2 }}
