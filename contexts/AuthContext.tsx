@@ -1,8 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import type { Profile } from '@/lib/supabase/types';
 
 const STORAGE_KEY = 'tripura-auth';
 const PROFILE_IMAGE_KEY = 'tripura-profile-image';
@@ -34,29 +32,6 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const defaultDisplayName = 'Nutzer';
 
-function profileToAuthUser(p: Profile | null): AuthUser | null {
-  if (!p) return null;
-  return {
-    id: p.id,
-    displayName: p.display_name ?? defaultDisplayName,
-    email: p.email ?? null,
-    profileImageUrl: p.avatar_url ?? null,
-  };
-}
-
-function hasSupabaseConfig(): boolean {
-  return typeof window !== 'undefined' &&
-    !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-}
-
-/** Auf true setzen, sobald die Migration für `profiles` ausgeführt wurde – verhindert 404 solange die Tabelle fehlt. */
-const USE_PROFILES_TABLE = false;
-
-function useProfilesTable(): boolean {
-  return USE_PROFILES_TABLE && process.env.NEXT_PUBLIC_SUPABASE_PROFILES_ENABLED === 'true';
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<{
     isLoggedIn: boolean;
@@ -64,138 +39,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: boolean;
   }>({ isLoggedIn: false, user: null, isLoading: true });
 
-  const fetchProfile = useCallback(async (userId: string): Promise<AuthUser | null> => {
-    if (!hasSupabaseConfig() || !useProfilesTable()) return null;
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, display_name, avatar_url, created_at, updated_at')
-        .eq('id', userId)
-        .maybeSingle();
-      if (error) return null;
-      return profileToAuthUser(data as Profile | null);
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const syncSession = useCallback(async () => {
-    if (!hasSupabaseConfig()) {
-      setState({ isLoggedIn: false, user: null, isLoading: false });
-      return;
-    }
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      setState({ isLoggedIn: false, user: null, isLoading: false });
-      return;
-    }
-    const user = await fetchProfile(session.user.id);
-    setState({
-      isLoggedIn: true,
-      user: user ?? {
-        id: session.user.id,
-        displayName: session.user.user_metadata?.full_name ?? session.user.email?.split('@')[0] ?? defaultDisplayName,
-        email: session.user.email ?? null,
-        profileImageUrl: session.user.user_metadata?.avatar_url ?? null,
-      },
-      isLoading: false,
-    });
-  }, [fetchProfile]);
-
   useEffect(() => {
-    if (!hasSupabaseConfig()) {
+    // On mount, ask backend who is logged in based on cookie
+    const load = async () => {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const imageUrl = localStorage.getItem(PROFILE_IMAGE_KEY);
-        if (raw) {
-          const data = JSON.parse(raw);
-          if (data.isLoggedIn) {
-            setState({
-              isLoggedIn: true,
-              user: {
-                id: '',
-                displayName: data.displayName ?? defaultDisplayName,
-                email: null,
-                profileImageUrl: imageUrl || null,
-              },
-              isLoading: false,
-            });
-            return;
-          }
-        }
-      } catch (_) {}
-      setState({ isLoggedIn: false, user: null, isLoading: false });
-      return;
-    }
-
-    syncSession();
-
-    const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        fetchProfile(session.user.id).then((user) => {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) throw new Error('failed');
+        const data = await res.json();
+        if (data.user) {
           setState({
             isLoggedIn: true,
-            user: user ?? {
-              id: session.user.id,
-              displayName: session.user.user_metadata?.full_name ?? session.user.email?.split('@')[0] ?? defaultDisplayName,
-              email: session.user.email ?? null,
-              profileImageUrl: session.user.user_metadata?.avatar_url ?? null,
-            },
+            user: data.user,
             isLoading: false,
           });
-        });
-      } else {
+        } else {
+          setState({ isLoggedIn: false, user: null, isLoading: false });
+        }
+      } catch {
         setState({ isLoggedIn: false, user: null, isLoading: false });
       }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [syncSession, fetchProfile]);
+    };
+    load();
+  }, []);
 
   const loginWithEmail = useCallback(async (email: string): Promise<{ error: Error | null }> => {
-    if (!hasSupabaseConfig()) {
-      login(email.split('@')[0]);
+    try {
+      const res = await fetch('/api/auth/request-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return { error: new Error(data.error || 'Fehler beim Senden des Login-Links') };
+      }
       return { error: null };
+    } catch {
+      return { error: new Error('Netzwerkfehler beim Senden des Login-Links') };
     }
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
-    });
-    return { error: error ?? null };
   }, []);
 
   const loginWithGoogle = useCallback(async (): Promise<{ error: Error | null }> => {
-    if (!hasSupabaseConfig()) {
-      login();
-      return { error: null };
-    }
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
-    });
-    return { error: error ?? null };
+    login();
+    return { error: null };
   }, []);
 
   const loginWithApple = useCallback(async (): Promise<{ error: Error | null }> => {
-    if (!hasSupabaseConfig()) {
-      login();
-      return { error: null };
-    }
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
-    });
-    return { error: error ?? null };
+    login();
+    return { error: null };
   }, []);
 
   const login = useCallback((displayName?: string) => {
-    if (hasSupabaseConfig()) return;
     const user: AuthUser = {
       id: '',
       displayName: displayName ?? defaultDisplayName,
@@ -209,10 +103,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    if (hasSupabaseConfig()) {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-    }
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (_) {}
     setState({ isLoggedIn: false, user: null, isLoading: false });
     try {
       localStorage.removeItem(STORAGE_KEY);
@@ -220,20 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setProfileImage = useCallback(async (url: string | null) => {
-    const uid = state.user?.id;
-    if (hasSupabaseConfig() && useProfilesTable() && uid) {
-      try {
-        const supabase = createClient();
-        await supabase.from('profiles').update({ avatar_url: url, updated_at: new Date().toISOString() }).eq('id', uid);
-      } catch {
-        if (typeof window !== 'undefined') {
-          try {
-            if (url) localStorage.setItem(PROFILE_IMAGE_KEY, url);
-            else localStorage.removeItem(PROFILE_IMAGE_KEY);
-          } catch (_) {}
-        }
-      }
-    } else if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       try {
         if (url) localStorage.setItem(PROFILE_IMAGE_KEY, url);
         else localStorage.removeItem(PROFILE_IMAGE_KEY);
