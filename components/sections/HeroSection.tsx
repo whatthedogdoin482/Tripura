@@ -56,9 +56,6 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
       ref={containerRef}
       className="relative min-h-screen w-full overflow-hidden"
     >
-      {/* Log-in Button oben rechts */}
-      <AuthButton variant="hero" onOpenAuth={onOpenAuth} />
-
       {/* Background Map */}
       <motion.div
         style={{ scale: mapScale, opacity: mapOpacity }}
@@ -83,16 +80,17 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
       {/* Leichter Gradient für Text-Lesbarkeit – Map noch erkennbar, Text klar im Vordergrund */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/5 to-black/35 z-[1] pointer-events-none" />
 
-      {/* Weiche Blur-Maske genau im Überschneidungsbereich von Map-Labels und Hero-Text */}
+      {/* Weiche Blur-Maske nur im Überschneidungsbereich von Map-Labels und Hero-Text.
+          Kleine Ellipse im Zentrum, damit nur der relevante Bereich leicht unscharf ist. */}
       <div
         className="absolute inset-0 z-[2] pointer-events-none"
         style={{
           WebkitBackdropFilter: 'blur(4px)',
           backdropFilter: 'blur(4px)',
           WebkitMaskImage:
-            'radial-gradient(ellipse 22% 12% at 50% 45%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.95) 65%, transparent 100%)',
+            'radial-gradient(ellipse 18% 10% at 50% 45%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.95) 70%, transparent 100%)',
           maskImage:
-            'radial-gradient(ellipse 22% 12% at 50% 45%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.95) 65%, transparent 100%)',
+            'radial-gradient(ellipse 18% 10% at 50% 45%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.95) 70%, transparent 100%)',
         }}
         aria-hidden
       />
@@ -112,6 +110,19 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
         style={{ y: contentY, opacity: contentOpacity }}
         className="relative z-30 flex flex-col items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8"
       >
+        {/* Log-in Button im Hero – oben rechts in der Ecke, etwas kleiner */}
+        <div className="absolute top-6 right-4 sm:top-8 sm:right-8">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onOpenAuth?.('login')}
+            className="hero-cta-secondary flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-white/40 backdrop-blur-md"
+          >
+            <Compass className="w-4 h-4" />
+            <span>Log in</span>
+          </motion.button>
+        </div>
+
         {/* Badge – transparentes Weiß, abgestimmt auf Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -179,7 +190,7 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="flex flex-col sm:flex-row gap-4"
+          className="flex flex-col sm:flex-row gap-4 mt-8"
         >
           <motion.button
             whileHover={{ scale: 1.05 }}

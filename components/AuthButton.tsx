@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, LogIn, UserPlus, LogOut, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +26,17 @@ export function AuthButton({
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileMenuOpen, setProfileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const update = () => {
+      setIsMobile(window.innerWidth < 768); // Tailwind md-Breakpoint
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   const handleAddPhoto = () => {
     fileInputRef.current?.click();
@@ -131,59 +142,30 @@ export function AuthButton({
             </AnimatePresence>
           </>
         ) : (
-          <>
-            <motion.button
-              onMouseEnter={() => setIsOpen(true)}
-              onClick={() => setIsOpen((o) => !o)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`${baseNavClass} ${activeNavClass} ${className}`}
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Log in</span>
-            </motion.button>
-            <AnimatePresence>
-              {isOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  onMouseEnter={() => setIsOpen(true)}
-                  className="absolute right-0 top-full pt-2 py-1 min-w-[160px] rounded-xl glass-card shadow-lg z-50"
-                >
-                  <button
-                    type="button"
-                    onClick={() => { onOpenAuth?.('login'); setIsOpen(false); }}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-gray-700 hover:bg-gray-100 rounded-t-xl text-sm"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    Log in
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { onOpenAuth?.('register'); setIsOpen(false); }}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-gray-700 hover:bg-gray-100 rounded-b-xl text-sm"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Registrieren
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </>
+          // Nicht eingeloggt: Navbar-Login öffnet immer direkt das Auth-Modal (Login),
+          // sowohl auf Desktop als auch auf Mobile.
+          <motion.button
+            onClick={() => onOpenAuth?.('login')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`${baseNavClass} ${activeNavClass} ${className}`}
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Log in</span>
+          </motion.button>
         )}
       </div>
     );
   }
 
-  // Hero: immer "Log in" Button, Hover zeigt Log in / Registrieren (pt-2 statt mt-2 = keine Lücke, Menü bleibt beim Bewegen der Maus offen)
+  // Hero: Optik wie bisher, Funktion: öffnet direkt das Auth-Modal (Login),
+  // sowohl auf Desktop als auch Mobile (kein Dropdown).
   return (
     <div
       className={`absolute top-6 right-4 sm:right-6 z-30 ${className}`}
-      onMouseLeave={() => setIsOpen(false)}
     >
       <motion.button
-        onMouseEnter={() => setIsOpen(true)}
+        onClick={() => onOpenAuth?.('login')}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className="hero-cta-secondary flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium text-white border border-white/40 backdrop-blur-md"
@@ -191,40 +173,6 @@ export function AuthButton({
         <User className="w-4 h-4" />
         <span>Log in</span>
       </motion.button>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            onMouseEnter={() => setIsOpen(true)}
-            className="absolute right-0 top-full pt-2 py-1 min-w-[160px] rounded-xl shadow-lg z-50 overflow-hidden"
-            style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => { onOpenAuth?.('login'); setIsOpen(false); }}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-gray-800 hover:bg-gray-100 rounded-t-xl text-sm font-medium"
-            >
-              <LogIn className="w-4 h-4" />
-              Log in
-            </button>
-            <button
-              type="button"
-              onClick={() => { onOpenAuth?.('register'); setIsOpen(false); }}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-gray-800 hover:bg-gray-100 rounded-b-xl text-sm font-medium"
-            >
-              <UserPlus className="w-4 h-4" />
-              Registrieren
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
