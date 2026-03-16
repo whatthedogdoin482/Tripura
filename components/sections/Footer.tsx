@@ -64,7 +64,7 @@ export function Footer() {
             © 2024 Wanderlust. All rights reserved.
           </p>
           <p className="text-gray-400 text-sm flex items-center gap-1">
-            Made with <Heart className="w-4 h-4 text-red-500 fill-current" /> in Berlin
+            Made with <Heart className="w-4 h-4 text-red-500 fill-current" /> in Freiburg
           </p>
         </div>
       </div>

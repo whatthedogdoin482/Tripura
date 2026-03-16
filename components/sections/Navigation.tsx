@@ -54,12 +54,28 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
         transition={{ type: 'spring', stiffness: 100, damping: 20 }}
         className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-4"
       >
-        <nav className="max-w-6xl mx-auto glass-card rounded-full px-6 py-3">
+        <nav className="max-w-6xl mx-auto rounded-full px-6 py-3 bg-white/85 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between">
-            {/* Logo */}
-            <motion.span whileHover={{ scale: 1.02 }}>
-              <TripuraLogo size="sm" showLabel labelClassName="text-gray-900 hidden sm:inline" />
-            </motion.span>
+            {/* Logo – klick führt immer zum Start-Screen (Home + nach oben scrollen) */}
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              onClick={() => {
+                onViewChange?.('home');
+                if (typeof window !== 'undefined') {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+              className="flex items-center gap-2"
+              aria-label="Zur Startseite"
+            >
+              <TripuraLogo
+                asLink={false}
+                size="sm"
+                showLabel
+                labelClassName="text-gray-900 hidden sm:inline"
+              />
+            </motion.button>
 
             {/* Desktop nav items */}
             <div className="hidden md:flex items-center gap-1">
@@ -117,7 +133,7 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
             exit={{ opacity: 0, y: -20 }}
             className="fixed inset-x-0 top-20 z-40 px-4 md:hidden"
           >
-            <div className="glass-card rounded-3xl p-4 space-y-2">
+            <div className="rounded-3xl p-4 space-y-2 bg-white/90 backdrop-blur-md shadow-md">
               {navItems.map((item, index) =>
                 item.id === 'profile' ? (
                   <div key={item.id} className="pt-2">
@@ -167,7 +183,7 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
         animate={{ y: 0 }}
         className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 md:hidden"
       >
-        <div className="glass-card rounded-3xl px-4 py-3">
+        <div className="rounded-3xl px-4 py-3 bg-white/90 backdrop-blur-md shadow-md">
           <div className="flex items-center justify-around">
             {navItems.slice(0, 5).map((item) =>
               item.id === 'profile' ? (

@@ -190,3 +190,16 @@ a {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* Lila-blauer Gradient für Marken-Headlines (z.B. Loading-Screen) */
+.heading-purple-gradient {
+  background: linear-gradient(
+    to right,
+    #3b82f6 0%,
+    #6366f1 50%,
+    #a855f7 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

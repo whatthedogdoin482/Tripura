@@ -41,12 +41,11 @@ export default function TripuraLogo({
     <>
       <div
         className={`${boxClass} rounded-full flex items-center justify-center overflow-hidden flex-shrink-0`}
-        style={{ backgroundColor: '#1B262C' }}
       >
         <img
           src="/logo.PNG"
           alt="Tripura Logo"
-          className="w-full h-full object-cover rounded-full"
+          className="w-full h-full object-contain"
         />
       </div>
       {showLabel && (
