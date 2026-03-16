@@ -21,17 +21,25 @@ function ReiseAppContent() {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [isLoading, setIsLoading] = useState(true);
   const [authModal, setAuthModal] = useState<AuthModalMode | null>(null);
-  const { login, loginWithEmail, loginWithGoogle, loginWithApple, user } = useAuth();
+  const {
+    login,
+    loginWithEmail,
+    loginWithGoogle,
+    loginWithApple,
+    registerWithPassword,
+    loginWithPassword,
+    user,
+  } = useAuth();
 
   const handlePlanningComplete = () => goToView('explore');
 
   const handleOpenAuth = (mode: AuthModalMode) => setAuthModal(mode);
   const handleCloseAuth = () => setAuthModal(null);
-  const handleAuthEmail = () => {
-    login();
-    setAuthModal(null);
-  };
   const handleEmailRequest = (email: string) => loginWithEmail(email);
+  const handleRegisterWithPassword = (email: string, password: string) =>
+    registerWithPassword(email, password);
+  const handleLoginWithPassword = (email: string, password: string) =>
+    loginWithPassword(email, password);
   const handleApple = async () => {
     await loginWithApple();
     setAuthModal(null);
@@ -290,7 +298,8 @@ function ReiseAppContent() {
             mode={authModal}
             onClose={handleCloseAuth}
             onSwitchMode={setAuthModal}
-            onEmail={handleAuthEmail}
+            onRegisterWithPassword={handleRegisterWithPassword}
+            onLoginWithPassword={handleLoginWithPassword}
             onEmailRequest={handleEmailRequest}
             onApple={handleApple}
             onGoogle={handleGoogle}

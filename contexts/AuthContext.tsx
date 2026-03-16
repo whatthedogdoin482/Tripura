@@ -18,6 +18,10 @@ interface AuthContextValue {
   isLoading: boolean;
   /** E-Mail-Link anfordern (Supabase Magic Link) */
   loginWithEmail: (email: string) => Promise<{ error: Error | null }>;
+  /** E-Mail + Passwort registrieren */
+  registerWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
+  /** E-Mail + Passwort Login */
+  loginWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   /** Mit Google anmelden (Supabase OAuth) */
   loginWithGoogle: () => Promise<{ error: Error | null }>;
   /** Mit Apple anmelden (Supabase OAuth) */
@@ -61,6 +65,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     load();
   }, []);
+
+  const registerWithPassword = useCallback(
+    async (email: string, password: string): Promise<{ error: Error | null }> => {
+      try {
+        const res = await fetch('/api/auth/register-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          return { error: new Error(data.error || 'Registrierung fehlgeschlagen.') };
+        }
+        // Refresh session info
+        const me = await fetch('/api/auth/me', { credentials: 'include' });
+        if (me.ok) {
+          const payload = await me.json();
+          if (payload.user) {
+            setState({ isLoggedIn: true, user: payload.user, isLoading: false });
+          }
+        }
+        return { error: null };
+      } catch {
+        return { error: new Error('Netzwerkfehler bei der Registrierung.') };
+      }
+    },
+    [],
+  );
+
+  const loginWithPassword = useCallback(
+    async (email: string, password: string): Promise<{ error: Error | null }> => {
+      try {
+        const res = await fetch('/api/auth/login-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          return { error: new Error(data.error || 'E-Mail oder Passwort ist falsch.') };
+        }
+        const me = await fetch('/api/auth/me', { credentials: 'include' });
+        if (me.ok) {
+          const payload = await me.json();
+          if (payload.user) {
+            setState({ isLoggedIn: true, user: payload.user, isLoading: false });
+          }
+        }
+        return { error: null };
+      } catch {
+        return { error: new Error('Netzwerkfehler bei der Anmeldung.') };
+      }
+    },
+    [],
+  );
 
   const loginWithEmail = useCallback(async (email: string): Promise<{ error: Error | null }> => {
     try {
@@ -130,6 +191,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: state.user,
     isLoading: state.isLoading,
     loginWithEmail,
+    registerWithPassword,
+    loginWithPassword,
     loginWithGoogle,
     loginWithApple,
     login,

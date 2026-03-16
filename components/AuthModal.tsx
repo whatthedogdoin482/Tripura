@@ -10,9 +10,11 @@ export interface AuthModalProps {
   mode?: AuthModalMode;
   onClose: () => void;
   onSwitchMode?: (mode: AuthModalMode) => void;
-  /** Demo: sofort einloggen ohne E-Mail */
-  onEmail?: () => void;
-  /** Supabase: E-Mail eingeben → Magic Link senden */
+  /** E-Mail & Passwort Registrierung */
+  onRegisterWithPassword?: (email: string, password: string) => Promise<{ error: Error | null }>;
+  /** E-Mail & Passwort Login */
+  onLoginWithPassword?: (email: string, password: string) => Promise<{ error: Error | null }>;
+  /** Magic-Link per E-Mail senden */
   onEmailRequest?: (email: string) => Promise<{ error: Error | null }>;
   onApple?: () => void;
   onGoogle?: () => void;
@@ -47,13 +49,18 @@ export default function AuthModal({
   mode = 'login',
   onClose,
   onSwitchMode,
-  onEmail,
+  onRegisterWithPassword,
+  onLoginWithPassword,
   onEmailRequest,
   onApple,
   onGoogle,
 }: AuthModalProps) {
   const isRegister = mode === 'register';
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [tab, setTab] = useState<'password' | 'magic'>('password');
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -68,13 +75,10 @@ export default function AuthModal({
   }, []);
 
   const handleEmailClick = () => {
-    if (onEmailRequest) {
-      setShowEmailInput(true);
-      setEmailSent(false);
-      setEmailError(null);
-    } else {
-      onEmail?.();
-    }
+    if (!onEmailRequest) return;
+    setShowEmailInput(true);
+    setEmailSent(false);
+    setEmailError(null);
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -96,6 +100,25 @@ export default function AuthModal({
   };
   const handleGoogle = () => {
     onGoogle?.();
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password.trim()) return;
+    setAuthLoading(true);
+    setAuthError(null);
+    const handler = isRegister ? onRegisterWithPassword : onLoginWithPassword;
+    if (!handler) {
+      setAuthLoading(false);
+      return;
+    }
+    const { error } = await handler(email.trim(), password);
+    setAuthLoading(false);
+    if (error) {
+      setAuthError(error.message);
+      return;
+    }
+    onClose();
   };
 
   return (
@@ -156,7 +179,56 @@ export default function AuthModal({
             </p>
 
             <div className="space-y-3">
-              {showEmailInput ? (
+              {/* Tabs: Passwort vs Magic Link */}
+              <div className="flex rounded-xl bg-gray-100 p-1 text-xs font-medium mb-2">
+                <button
+                  type="button"
+                  onClick={() => setTab('password')}
+                  className={`flex-1 py-2 rounded-lg transition-colors ${
+                    tab === 'password' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                  }`}
+                >
+                  E-Mail &amp; Passwort
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab('magic')}
+                  className={`flex-1 py-2 rounded-lg transition-colors ${
+                    tab === 'magic' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                  }`}
+                >
+                  Login-Link per E-Mail
+                </button>
+              </div>
+
+              {tab === 'password' ? (
+                <form onSubmit={handlePasswordSubmit} className="space-y-3">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="E-Mail-Adresse"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                    required
+                  />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Passwort"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                    required
+                  />
+                  {authError && <p className="text-xs text-red-600">{authError}</p>}
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-95 disabled:opacity-70"
+                  >
+                    {authLoading ? 'Bitte warten…' : isRegister ? 'Registrieren' : 'Anmelden'}
+                  </button>
+                </form>
+              ) : showEmailInput ? (
                 <form onSubmit={handleEmailSubmit} className="space-y-2">
                   <input
                     type="email"
@@ -208,7 +280,7 @@ export default function AuthModal({
                   }}
                 >
                   <Mail className="w-[18px] h-[18px]" />
-                  Mit E-Mail {isRegister ? 'registrieren' : 'anmelden'}
+                  Magic-Link per E-Mail
                 </motion.button>
               )}
 
