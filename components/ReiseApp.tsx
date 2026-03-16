@@ -31,12 +31,7 @@ function ReiseAppContent() {
     user,
   } = useAuth();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handlePlanningComplete = () => setCurrentView('explore');
+  const handlePlanningComplete = () => goToView('explore');
 
   const handleOpenAuth = (mode: AuthModalMode) => setAuthModal(mode);
   const handleCloseAuth = () => setAuthModal(null);
@@ -54,13 +49,34 @@ function ReiseAppContent() {
     setAuthModal(null);
   };
 
+  const goToView = (view: AppView) => {
+    if (typeof window !== 'undefined') {
+      // Sofort ganz nach oben springen – ohne Scroll-Animation
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+    setCurrentView(view);
+  };
+
+  // Beim ersten Laden der App immer ganz nach oben springen
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+    const timer = setTimeout(() => setIsLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   const renderView = () => {
     switch (currentView) {
       case 'home':
         return (
           <>
             <HeroSection
-              onStartPlanning={() => setCurrentView('plan')}
+              onStartPlanning={() => goToView('plan')}
               onOpenAuth={handleOpenAuth}
             />
             <div className="below-hero-content">
@@ -273,7 +289,7 @@ function ReiseAppContent() {
     <div className="min-h-screen bg-white">
       <Navigation
         currentView={currentView}
-        onViewChange={(view) => setCurrentView(view as AppView)}
+        onViewChange={(view) => goToView(view as AppView)}
         onOpenAuth={handleOpenAuth}
       />
       <AnimatePresence>

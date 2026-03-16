@@ -101,8 +101,10 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
     };
   }, [showRegionModal]);
 
-  // Beim Wechsel von Schritt/Frage nicht nach unten scrollen – Planungs-Karte oben halten
+  // Beim Wechsel von Schritt/Frage die Planungs-Karte oben halten,
+  // aber die Einstiegsfrage ("destination") unverändert lassen.
   useEffect(() => {
+    if (currentStep === 'destination' && currentQuestionIndex === 0) return;
     const el = stepCardRef.current;
     if (!el) return;
     const id = requestAnimationFrame(() => {
@@ -1138,7 +1140,11 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
 
   return (
     <>
-    <section ref={sectionRef} className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
+    <section
+      ref={sectionRef}
+      data-section="planning"
+      className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white"
+    >
       <div className="max-w-4xl mx-auto">
         {/* Section header */}
         <motion.div

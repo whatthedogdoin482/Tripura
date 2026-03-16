@@ -45,6 +45,10 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
   const isLandingPage = currentView === 'home';
   const navVisible = isLandingPage ? isScrolled : true;
 
+  const navigateTo = (view: string) => {
+    onViewChange?.(view);
+  };
+
   return (
     <>
       {/* Desktop Navigation: auf Landing-Page beim Scrollen einblenden, sonst immer sichtbar */}
@@ -60,12 +64,7 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
             <motion.button
               type="button"
               whileHover={{ scale: 1.02 }}
-              onClick={() => {
-                onViewChange?.('home');
-                if (typeof window !== 'undefined') {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-              }}
+              onClick={() => navigateTo('home')}
               className="flex items-center gap-2"
               aria-label="Zur Startseite"
             >
@@ -81,17 +80,17 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
             <div className="hidden md:flex items-center gap-1">
               {navItems.map((item) =>
                 item.id === 'profile' ? (
-                  <AuthButton
-                    key={item.id}
-                    variant="nav"
-                    onOpenAuth={onOpenAuth}
-                    onNavigateToProfile={() => onViewChange?.('profile')}
-                    isActive={currentView === 'profile'}
-                  />
+                    <AuthButton
+                      key={item.id}
+                      variant="nav"
+                      onOpenAuth={onOpenAuth}
+                      onNavigateToProfile={() => navigateTo('profile')}
+                      isActive={currentView === 'profile'}
+                    />
                 ) : (
                   <motion.button
                     key={item.id}
-                    onClick={() => onViewChange?.(item.id)}
+                    onClick={() => navigateTo(item.id)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
@@ -144,7 +143,7 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
                         setIsMobileMenuOpen(false);
                       }}
                       onNavigateToProfile={() => {
-                        onViewChange?.('profile');
+                        navigateTo('profile');
                         setIsMobileMenuOpen(false);
                       }}
                       isActive={currentView === 'profile'}
@@ -158,7 +157,7 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={() => {
-                      onViewChange?.(item.id);
+                      navigateTo(item.id);
                       setIsMobileMenuOpen(false);
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
@@ -190,7 +189,7 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
                 <motion.button
                   key={item.id}
                   onClick={() =>
-                    isLoggedIn ? onViewChange?.('profile') : onOpenAuth?.('login')
+                    isLoggedIn ? navigateTo('profile') : onOpenAuth?.('login')
                   }
                   whileTap={{ scale: 0.9 }}
                   className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
@@ -215,7 +214,7 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
               ) : (
                 <motion.button
                   key={item.id}
-                  onClick={() => onViewChange?.(item.id)}
+                  onClick={() => navigateTo(item.id)}
                   whileTap={{ scale: 0.9 }}
                   className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
                     currentView === item.id ? 'text-blue-600' : 'text-gray-500'
