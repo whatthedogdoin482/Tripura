@@ -142,23 +142,121 @@ function ReiseAppContent() {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white">
+        {/* Logo ohne Ring */}
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
           className="flex flex-col items-center"
         >
-          <TripuraLogo asLink={false} showLabel size="lg" className="flex-col gap-4" labelClassName="text-gray-900" />
+          <TripuraLogo
+            asLink={false}
+            showLabel={false}
+            size="lg"
+          />
         </motion.div>
+
+        {/* Headline im Tripura-Gradient-Stil */}
+        <motion.h1
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="mt-8 text-2xl sm:text-3xl font-bold heading-reverse-gradient text-center"
+        >
+          Dein perfekter Trip wird vorbereitet
+        </motion.h1>
+
+        {/* Subtext im Apple-Look */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 text-gray-500 text-sm"
+          transition={{ delay: 0.4, duration: 0.4 }}
+          className="mt-3 text-sm sm:text-base text-gray-500 text-center max-w-md"
         >
-          Lade dein Abenteuer...
+          Wir analysieren Wetter, Routen und deine Vorlieben, damit deine Reise sich so einfach anfühlt wie ein Tap.
         </motion.p>
+
+        {/* Ästhetische Lade-Animation mit zwei Pfeilen im Farbverlauf */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.3 }}
+          className="mt-8 flex items-center justify-center"
+        >
+          <motion.div
+            className="relative w-16 h-16 sm:w-20 sm:h-20"
+            animate={{ rotate: 360, scale: [1, 1.08, 1] }}
+            transition={{
+              repeat: Infinity,
+              repeatType: 'loop',
+              duration: 2.0,
+              ease: 'linear',
+            }}
+          >
+            {/* Erster Pfeil */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg
+                viewBox="0 0 40 40"
+                className="w-full h-full"
+              >
+                <defs>
+                  <linearGradient id="arrowGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="50%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#a855f7" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M8 20c0-6.6 5.4-12 12-12h6"
+                  fill="none"
+                  stroke="url(#arrowGradient1)"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M20 4l6 4-6 4"
+                  fill="none"
+                  stroke="url(#arrowGradient1)"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            {/* Zweiter Pfeil, versetzt und im dunkleren Teil des Verlaufs */}
+            <div className="absolute inset-0 flex items-center justify-center rotate-180">
+              <svg
+                viewBox="0 0 40 40"
+                className="w-full h-full"
+              >
+                <defs>
+                  <linearGradient id="arrowGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="50%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#3b82f6" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M8 20c0-6.6 5.4-12 12-12h6"
+                  fill="none"
+                  stroke="url(#arrowGradient2)"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M20 4l6 4-6 4"
+                  fill="none"
+                  stroke="url(#arrowGradient2)"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
     );
   }

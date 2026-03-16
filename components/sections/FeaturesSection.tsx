@@ -97,10 +97,12 @@ function FeatureCard({
   feature,
   index,
   onClick,
+  isActive,
 }: {
   feature: typeof features[0];
   index: number;
   onClick: () => void;
+  isActive: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
@@ -119,34 +121,39 @@ function FeatureCard({
         onClick={onClick}
         className="w-full text-left rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       >
-      <div className="relative p-6 sm:p-8 rounded-3xl glass-card h-full overflow-hidden">
-        {/* Background gradient on hover */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-        
-        {/* Icon */}
-        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-lg`}>
-          <feature.icon className="w-7 h-7 text-white" />
+        <div className="relative w-full rounded-3xl glass-card overflow-hidden px-5 py-4">
+          {/* Hintergrund-Gradient wie bei der ursprünglichen Karte */}
+          <div
+            className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${feature.color} opacity-10`}
+          />
+
+          <div className="relative flex flex-col gap-3">
+            {/* Icon + Titel in einer Zeile, Titel dauerhaft sichtbar */}
+            <div className="flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg`}>
+                <feature.icon className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {feature.title}
+              </h3>
+            </div>
+
+            {/* Beschreibung klappt unter dem Icon-/Titelbereich auf, kein separates Pop-up */}
+            <AnimatePresence initial={false}>
+              {isActive && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-sm text-gray-600 leading-relaxed"
+                >
+                  {feature.description}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-
-        {/* Content */}
-        <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-          {feature.title}
-        </h3>
-        <p className="text-gray-600 leading-relaxed">
-          {feature.description}
-        </p>
-
-        {/* Arrow indicator */}
-        <motion.div
-          initial={{ opacity: 0, x: -10 }}
-          whileHover={{ opacity: 1, x: 0 }}
-          className="absolute bottom-6 right-6 text-gray-400 group-hover:text-blue-500"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </motion.div>
-      </div>
       </button>
     </motion.div>
   );
@@ -164,8 +171,10 @@ export function FeaturesSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
   const [selectedFeature, setSelectedFeature] = useState<{ title: string; key: 'restaurants' | 'activities' } | null>(null);
+  const [activeFeatureTitle, setActiveFeatureTitle] = useState<string | null>(null);
 
   const handleFeatureClick = (title: string) => {
+    setActiveFeatureTitle((current) => (current === title ? null : title));
     const key = featureToDataKey[title];
     if (key) setSelectedFeature({ title, key });
   };
@@ -219,6 +228,7 @@ export function FeaturesSection() {
               feature={feature}
               index={index}
               onClick={() => handleFeatureClick(feature.title)}
+              isActive={activeFeatureTitle === feature.title}
             />
           ))}
         </div>
