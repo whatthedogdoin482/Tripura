@@ -95,12 +95,12 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
         aria-hidden
       />
 
-      {/* Weicher Übergang Map → Weiß: unten ausblenden, kein harter Cut beim Scrollen */}
+      {/* Einheitlicher Übergang Map → Weiß: fester weißer Streifen unten, dann weicher Gradient – keine wellige Kante */}
       <div
         className="absolute bottom-0 left-0 right-0 z-[2] pointer-events-none"
         style={{
           height: '55vh',
-          background: 'linear-gradient(to top, #ffffff 0%, rgba(255,255,255,0.85) 25%, rgba(255,255,255,0.4) 55%, transparent 100%)',
+          background: 'linear-gradient(to top, #ffffff 0%, #ffffff 18%, rgba(255,255,255,0.6) 40%, transparent 100%)',
         }}
         aria-hidden
       />
