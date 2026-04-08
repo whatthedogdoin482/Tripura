@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "security:check": "node scripts/security-check.cjs"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.2",
@@ -44,5 +45,9 @@
     "baseline-browser-mapping": "^2.10.0",
     "eslint": "8.55.0",
     "eslint-config-next": "14.0.4"
+  },
+  "overrides": {
+    "axios@1.14.1": "1.14.0",
+    "axios@0.30.4": "0.30.3"
   }
 }

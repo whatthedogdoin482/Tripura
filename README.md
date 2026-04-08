@@ -135,6 +135,22 @@ tripura/
 3. Make your changes
 4. Submit a pull request
 
+## Security Notes (Axios Supply Chain)
+
+- This project currently does **not** use Axios directly.
+- We still enforce guardrails against known compromised releases from the March 2026 npm incident:
+  - Blocked: `axios@1.14.1`, `axios@0.30.4`, `plain-crypto-js@4.2.1`
+- Run this check after dependency changes:
+
+```bash
+npm run security:check
+```
+
+- If the check fails:
+  - remove/upgrade the vulnerable transitive package,
+  - run `npm install`,
+  - re-run `npm run security:check`.
+
 ## License
 
 MIT License - see LICENSE file for details
