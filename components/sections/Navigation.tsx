@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { 
   Compass, 
   Map, 
@@ -76,8 +76,9 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
               />
             </motion.button>
 
-            {/* Desktop nav items */}
-            <div className="hidden md:flex items-center gap-1">
+            {/* Desktop nav items – ein gemeinsames Highlight, das per layoutId zwischen Tabs gleitet */}
+            <LayoutGroup>
+            <div className="hidden md:flex items-center gap-1 relative">
               {navItems.map((item) =>
                 item.id === 'profile' ? (
                     <AuthButton
@@ -88,23 +89,34 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
                       isActive={currentView === 'profile'}
                     />
                 ) : (
-                  <motion.button
-                    key={item.id}
-                    onClick={() => navigateTo(item.id)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
-                      currentView === item.id
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </motion.button>
+                  <div key={item.id} className="relative">
+                    {currentView === item.id && (
+                      <motion.span
+                        layoutId="navHighlight"
+                        className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 -z-0"
+                        aria-hidden
+                        transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                      />
+                    )}
+                    <motion.button
+                      onClick={() => navigateTo(item.id)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+                        currentView === item.id
+                          ? 'text-white'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                      aria-current={currentView === item.id ? 'page' : undefined}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      <span className="text-sm font-medium">{item.label}</span>
+                    </motion.button>
+                  </div>
                 )
               )}
             </div>
+            </LayoutGroup>
 
             {/* Mobile menu button */}
             <motion.button
@@ -195,6 +207,7 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
                   className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
                     currentView === item.id ? 'text-blue-600' : 'text-gray-500'
                   }`}
+                  aria-current={currentView === item.id ? 'page' : undefined}
                 >
                   {isLoggedIn && user?.profileImageUrl ? (
                     <img
@@ -219,6 +232,7 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
                   className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
                     currentView === item.id ? 'text-blue-600' : 'text-gray-500'
                   }`}
+                  aria-current={currentView === item.id ? 'page' : undefined}
                 >
                   <item.icon className={`w-5 h-5 ${currentView === item.id ? 'fill-current' : ''}`} />
                   <span className="text-xs font-medium">{item.label}</span>

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { motion, useInView, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { 
   CreditCard, 
   Shield, 
@@ -27,6 +27,7 @@ export function BookingSection() {
   const nearestAirportCode = getNearestAirportCode(latitude ?? null, longitude ?? null);
   const sortedHinflug = sortFlightsByNearestAndCheapest(mockFlights, nearestAirportCode);
   const [activeTab, setActiveTab] = useState<BookingTab>('cards');
+  const [tabSlideDirection, setTabSlideDirection] = useState(0);
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
   const [selectedReturnFlightId, setSelectedReturnFlightId] = useState<string | null>(null);
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
@@ -41,6 +42,16 @@ export function BookingSection() {
     { id: 'transfers' as BookingTab, label: 'Transfers', icon: Bus },
     { id: 'cars' as BookingTab, label: 'Mietwagen', icon: Car },
   ];
+
+  const setTab = (tab: BookingTab) => {
+    const nextIdx = tabs.findIndex((t) => t.id === tab);
+    const currIdx = tabs.findIndex((t) => t.id === activeTab);
+    setTabSlideDirection(nextIdx - currIdx);
+    setActiveTab(tab);
+  };
+
+  const TAB_SWIPE_OFFSET = 72;
+  const TAB_TRANSITION = { duration: 0.3, ease: [0.32, 0.72, 0, 1] as const };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -503,43 +514,64 @@ export function BookingSection() {
           </div>
         </motion.div>
 
-        {/* Tabs */}
+        {/* Tabs mit Sliding-Highlight */}
+        <LayoutGroup>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex flex-wrap justify-center gap-2 mb-8"
+          className="flex flex-wrap justify-center gap-2 mb-8 relative"
         >
           {tabs.map((tab) => (
-            <motion.button
-              key={tab.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
-                activeTab === tab.id
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <tab.icon className="w-5 h-5" />
-              {tab.label}
-            </motion.button>
+            <div key={tab.id} className="relative">
+              {activeTab === tab.id && (
+                <motion.span
+                  layoutId="bookingTabHighlight"
+                  className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg -z-0"
+                  aria-hidden
+                  transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                />
+              )}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setTab(tab.id)}
+                className={`relative z-10 flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                aria-current={activeTab === tab.id ? 'page' : undefined}
+              >
+                <tab.icon className="w-5 h-5" />
+                {tab.label}
+              </motion.button>
+            </div>
           ))}
         </motion.div>
+        </LayoutGroup>
 
-        {/* Tab content */}
-        <AnimatePresence mode="wait">
+        {/* Tab content mit seitlichem Swipe */}
+        <div className="overflow-x-hidden">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
+            initial={{
+              opacity: tabSlideDirection === 0 ? 1 : 0,
+              x: tabSlideDirection === 0 ? 0 : tabSlideDirection > 0 ? TAB_SWIPE_OFFSET : -TAB_SWIPE_OFFSET,
+            }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{
+              opacity: 0,
+              x: tabSlideDirection >= 0 ? -TAB_SWIPE_OFFSET : TAB_SWIPE_OFFSET,
+            }}
+            transition={TAB_TRANSITION}
+            style={{ willChange: 'transform' }}
           >
             {renderTabContent()}
           </motion.div>
         </AnimatePresence>
+        </div>
         </div>
       </div>
     </section>

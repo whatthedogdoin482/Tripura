@@ -1143,7 +1143,7 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
     <section
       ref={sectionRef}
       data-section="planning"
-      className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white"
+      className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-white"
     >
       <div className="max-w-4xl mx-auto">
         {/* Section header */}

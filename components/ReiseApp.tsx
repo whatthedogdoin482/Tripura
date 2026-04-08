@@ -17,8 +17,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { AppView } from '@/types';
 import type { AuthModalMode } from '@/components/AuthModal';
 
+const VIEW_ORDER: AppView[] = ['home', 'plan', 'explore', 'budget', 'bookings', 'profile'];
+const SWIPE_OFFSET = 72;
+const TRANSITION = { duration: 0.3, ease: [0.32, 0.72, 0, 1] };
+
 function ReiseAppContent() {
   const [currentView, setCurrentView] = useState<AppView>('home');
+  const [slideDirection, setSlideDirection] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [authModal, setAuthModal] = useState<AuthModalMode | null>(null);
   const {
@@ -51,11 +56,13 @@ function ReiseAppContent() {
 
   const goToView = (view: AppView) => {
     if (typeof window !== 'undefined') {
-      // Sofort ganz nach oben springen – ohne Scroll-Animation
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     }
+    const nextIdx = VIEW_ORDER.indexOf(view);
+    const currIdx = VIEW_ORDER.indexOf(currentView);
+    setSlideDirection(nextIdx - currIdx);
     setCurrentView(view);
   };
 
@@ -306,14 +313,21 @@ function ReiseAppContent() {
           />
         )}
       </AnimatePresence>
-      <main className="relative">
-        <AnimatePresence mode="wait">
+      <main className="relative overflow-x-hidden">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={currentView}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
+            initial={{
+              opacity: slideDirection === 0 ? 1 : 0,
+              x: slideDirection === 0 ? 0 : slideDirection > 0 ? SWIPE_OFFSET : -SWIPE_OFFSET,
+            }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{
+              opacity: 0,
+              x: slideDirection >= 0 ? -SWIPE_OFFSET : SWIPE_OFFSET,
+            }}
+            transition={TRANSITION}
+            style={{ willChange: 'transform' }}
           >
             {renderView()}
           </motion.div>
