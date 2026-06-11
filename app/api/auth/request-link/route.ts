@@ -1,18 +1,25 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { sendDevEmail } from '@/lib/email/resend'
+import { checkRateLimit, parseBody } from '@/lib/api/guard'
+import { logger } from '@/lib/log'
 
 const TOKEN_TTL_MINUTES = 15
 
+const bodySchema = z.object({
+  email: z.string().trim().toLowerCase().email('Ungültige E-Mail-Adresse.'),
+})
+
 export async function POST(request: Request) {
+  const limited = checkRateLimit(request, 'auth.request-link', 5, 15 * 60 * 1000)
+  if (limited) return limited
+
   try {
-    const { email } = (await request.json()) as { email?: string }
+    const parsed = await parseBody(request, bodySchema, 'auth.request-link')
+    if (parsed.response) return parsed.response
 
-    if (!email || typeof email !== 'string') {
-      return NextResponse.json({ error: 'E-Mail ist erforderlich' }, { status: 400 })
-    }
-
-    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedEmail = parsed.data.email
     const supabase = getAdminClient()
 
     // Upsert user
@@ -23,7 +30,7 @@ export async function POST(request: Request) {
       .single()
 
     if (userError || !user) {
-      console.error('Upsert user failed', userError)
+      logger.error('auth.request-link', 'upsert user failed', { error: userError?.message })
       return NextResponse.json({ error: 'Fehler beim Anlegen des Nutzers' }, { status: 500 })
     }
 
@@ -38,7 +45,7 @@ export async function POST(request: Request) {
     })
 
     if (tokenError) {
-      console.error('Insert login token failed', tokenError)
+      logger.error('auth.request-link', 'insert login token failed', { error: tokenError.message })
       return NextResponse.json({ error: 'Fehler beim Erzeugen des Login-Links' }, { status: 500 })
     }
 
@@ -56,9 +63,12 @@ export async function POST(request: Request) {
 <p>Wenn du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.</p>`,
     })
 
+    logger.info('auth.request-link', 'login link sent', { userId: user.id })
     return NextResponse.json({ ok: true })
   } catch (error) {
-    console.error('request-link error', error)
+    logger.error('auth.request-link', 'unexpected error', {
+      error: error instanceof Error ? error.message : String(error),
+    })
     return NextResponse.json({ error: 'Unerwarteter Fehler' }, { status: 500 })
   }
 }

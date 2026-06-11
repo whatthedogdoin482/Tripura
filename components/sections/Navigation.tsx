@@ -31,6 +31,7 @@ const navItems = [
 export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNavHovered, setIsNavHovered] = useState(false);
   const { isLoggedIn, user } = useAuth();
 
   useEffect(() => {
@@ -43,7 +44,8 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
   }, []);
 
   const isLandingPage = currentView === 'home';
-  const navVisible = isLandingPage ? isScrolled : true;
+  // Landing-Page ganz oben: nur Logo-Pille zeigen; Hover (oder Scrollen) blendet die volle Navbar ein
+  const collapsed = isLandingPage && !isScrolled && !isNavHovered && !isMobileMenuOpen;
 
   const navigateTo = (view: string) => {
     onViewChange?.(view);
@@ -51,89 +53,111 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
 
   return (
     <>
-      {/* Desktop Navigation: auf Landing-Page beim Scrollen einblenden, sonst immer sichtbar */}
-      <motion.header
-        initial={false}
-        animate={{ y: navVisible ? 0 : -100 }}
-        transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-        className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-4"
-      >
-        <nav className="max-w-6xl mx-auto rounded-full px-6 py-3 bg-white/85 backdrop-blur-md shadow-sm">
-          <div className="flex items-center justify-between">
-            {/* Logo – klick führt immer zum Start-Screen (Home + nach oben scrollen) */}
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              onClick={() => navigateTo('home')}
-              className="flex items-center gap-2"
-              aria-label="Zur Startseite"
-            >
-              <TripuraLogo
-                asLink={false}
-                size="sm"
-                showLabel
-                labelClassName="text-gray-900 hidden sm:inline"
-              />
-            </motion.button>
+      {/* Desktop Navigation: auf Landing-Page oben nur Logo, bei Hover/Scroll volle Leiste */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-4">
+        <div className={`max-w-6xl mx-auto ${collapsed ? 'flex justify-center' : ''}`}>
+          <nav
+            onMouseEnter={() => setIsNavHovered(true)}
+            onMouseLeave={() => setIsNavHovered(false)}
+            className={`rounded-full px-6 py-3 bg-white/85 backdrop-blur-md shadow-sm ${
+              collapsed ? 'inline-flex' : 'flex w-full'
+            }`}
+          >
+            <div className={`flex items-center ${collapsed ? '' : 'w-full justify-between gap-4'}`}>
+              {/* Logo – klick führt immer zum Start-Screen (Home + nach oben scrollen) */}
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                onClick={() => navigateTo('home')}
+                className="flex items-center gap-2 flex-shrink-0"
+                aria-label="Zur Startseite"
+              >
+                <TripuraLogo
+                  asLink={false}
+                  size="sm"
+                  showLabel
+                  labelClassName="text-gray-900 hidden sm:inline"
+                />
+              </motion.button>
 
-            {/* Desktop nav items – ein gemeinsames Highlight, das per layoutId zwischen Tabs gleitet */}
-            <LayoutGroup>
-            <div className="hidden md:flex items-center gap-1 relative">
-              {navItems.map((item) =>
-                item.id === 'profile' ? (
-                    <AuthButton
-                      key={item.id}
-                      variant="nav"
-                      onOpenAuth={onOpenAuth}
-                      onNavigateToProfile={() => navigateTo('profile')}
-                      isActive={currentView === 'profile'}
-                    />
-                ) : (
-                  <div key={item.id} className="relative">
-                    {currentView === item.id && (
-                      <motion.span
-                        layoutId="navHighlight"
-                        className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 -z-0"
-                        aria-hidden
-                        transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-                      />
-                    )}
+              {/* Grid 0fr→1fr: Breite und Opacity laufen parallel, kein AnimatePresence-Exit-Lag */}
+              <div
+                className={`grid transition-[grid-template-columns] ${
+                  collapsed
+                    ? 'grid-cols-[0fr] duration-100 ease-out'
+                    : 'grid-cols-[1fr] duration-[420ms] ease-in-out'
+                }`}
+              >
+                <div className="overflow-hidden min-w-0">
+                  <div
+                    className={`flex items-center pl-4 transition-opacity ${
+                      collapsed
+                        ? 'opacity-0 duration-75 ease-out pointer-events-none'
+                        : 'opacity-100 duration-300 delay-100 ease-in-out'
+                    }`}
+                  >
+                    {/* Desktop nav items – ein gemeinsames Highlight, das per layoutId zwischen Tabs gleitet */}
+                    <LayoutGroup>
+                    <div className="hidden md:flex items-center gap-1 relative whitespace-nowrap">
+                      {navItems.map((item) =>
+                        item.id === 'profile' ? (
+                            <AuthButton
+                              key={item.id}
+                              variant="nav"
+                              onOpenAuth={onOpenAuth}
+                              onNavigateToProfile={() => navigateTo('profile')}
+                              isActive={currentView === 'profile'}
+                            />
+                        ) : (
+                          <div key={item.id} className="relative">
+                            {currentView === item.id && (
+                              <motion.span
+                                layoutId="navHighlight"
+                                className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 -z-0"
+                                aria-hidden
+                                transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                              />
+                            )}
+                            <motion.button
+                              onClick={() => navigateTo(item.id)}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+                                currentView === item.id
+                                  ? 'text-white'
+                                  : 'text-gray-700 hover:bg-gray-100'
+                              }`}
+                              aria-current={currentView === item.id ? 'page' : undefined}
+                            >
+                              <item.icon className="w-4 h-4" />
+                              <span className="text-sm font-medium">{item.label}</span>
+                            </motion.button>
+                          </div>
+                        )
+                      )}
+                    </div>
+                    </LayoutGroup>
+
+                    {/* Mobile menu button */}
                     <motion.button
-                      onClick={() => navigateTo(item.id)}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
-                        currentView === item.id
-                          ? 'text-white'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                      aria-current={currentView === item.id ? 'page' : undefined}
+                      onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                      className="md:hidden w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"
                     >
-                      <item.icon className="w-4 h-4" />
-                      <span className="text-sm font-medium">{item.label}</span>
+                      {isMobileMenuOpen ? (
+                        <X className="w-5 h-5" />
+                      ) : (
+                        <Menu className="w-5 h-5" />
+                      )}
                     </motion.button>
                   </div>
-                )
-              )}
+                </div>
+              </div>
             </div>
-            </LayoutGroup>
-
-            {/* Mobile menu button */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </motion.button>
-          </div>
-        </nav>
-      </motion.header>
+          </nav>
+        </div>
+      </header>
 
       {/* Mobile Navigation */}
       <AnimatePresence>

@@ -10,6 +10,15 @@ export interface AuthUser {
   displayName: string;
   email: string | null;
   profileImageUrl: string | null;
+  travelStyle?: string | null;
+  language?: string | null;
+}
+
+export interface ProfileUpdate {
+  displayName?: string;
+  travelStyle?: string | null;
+  language?: string;
+  profileImageUrl?: string | null;
 }
 
 interface AuthContextValue {
@@ -30,6 +39,8 @@ interface AuthContextValue {
   login: (displayName?: string) => void;
   logout: () => Promise<void>;
   setProfileImage: (url: string | null) => Promise<void>;
+  /** Profilfelder (Name, Reisestil, Sprache, Avatar) speichern */
+  updateProfile: (update: ProfileUpdate) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -173,6 +184,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (_) {}
   }, []);
 
+  const updateProfile = useCallback(
+    async (update: ProfileUpdate): Promise<{ error: Error | null }> => {
+      try {
+        const res = await fetch('/api/user/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(update),
+          credentials: 'include',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          return { error: new Error(data.error || 'Profil konnte nicht gespeichert werden.') };
+        }
+        if (data.user) {
+          setState((prev) => ({ ...prev, isLoggedIn: true, user: data.user }));
+        }
+        return { error: null };
+      } catch {
+        return { error: new Error('Netzwerkfehler beim Speichern des Profils.') };
+      }
+    },
+    [],
+  );
+
   const setProfileImage = useCallback(async (url: string | null) => {
     if (typeof window !== 'undefined') {
       try {
@@ -184,7 +219,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!prev.user) return prev;
       return { ...prev, user: { ...prev.user, profileImageUrl: url } };
     });
-  }, [state.user?.id]);
+    // In der Datenbank persistieren (best effort; Demo-Login hat keine Session)
+    try {
+      await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileImageUrl: url }),
+        credentials: 'include',
+      });
+    } catch (_) {}
+  }, []);
 
   const value: AuthContextValue = {
     isLoggedIn: state.isLoggedIn,
@@ -198,6 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     logout,
     setProfileImage,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

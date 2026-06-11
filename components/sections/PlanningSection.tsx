@@ -23,6 +23,7 @@ import { SliderQuestion } from '@/components/questionnaire/SliderQuestion';
 import { BudgetSection } from '@/components/sections/BudgetSection';
 import { tripQuestionnaire, popularCities, mockFlights, mockReturnFlights, mockEsims, mockTransfers, mockCarRentals, mockCreditCards, formatFlightDuration, getNearestAirportCode, sortFlightsByNearestAndCheapest } from '@/data/mockData';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { submitSurvey } from '@/lib/survey';
 import type { QuestionnaireOption, QuestionnaireQuestion } from '@/types';
 
 type PlanningStep = 'destination' | 'flights' | 'dates' | 'budget' | 'extras' | 'flightChoice' | 'questionnaire' | 'offers' | 'generating';
@@ -213,6 +214,40 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
   };
 
   const handleFinishOffers = () => {
+    // Alle Antworten in trip_surveys persistieren (best effort, blockiert die UI nicht)
+    const questionnaire = tripQuestionnaire.map((q, index) => {
+      const swipeResults = questionnaireAnswers[index] as
+        | { option: QuestionnaireOption; liked: boolean }[]
+        | undefined;
+      return {
+        questionId: q.id,
+        question: q.question,
+        type: q.type,
+        ...(q.type === 'scale'
+          ? { value: scaleValues[index] ?? null }
+          : {
+              liked: swipeResults?.filter((r) => r.liked).map((r) => r.option.value) ?? [],
+              disliked: swipeResults?.filter((r) => !r.liked).map((r) => r.option.value) ?? [],
+            }),
+      };
+    });
+    void submitSurvey({
+      source: 'planning_section',
+      destinations,
+      regionSelections,
+      startDate: startDate || null,
+      endDate: endDate || null,
+      travelers,
+      travelExtras,
+      questionnaire,
+      selectedOffers: {
+        flightId: selectedOfferFlightId,
+        returnFlightId: selectedOfferReturnFlightId,
+        esimId: selectedOfferEsimId,
+        transferId: selectedOfferTransferId,
+        carId: selectedOfferCarId,
+      },
+    });
     setCurrentStep('generating');
     setTimeout(() => onPlanningComplete?.(), 3000);
   };

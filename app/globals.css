@@ -173,6 +173,15 @@ a {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
+/* Wird von Features/Budget/Planning referenziert – Blau→Lila-Verlauf wie die Headings */
+.gradient-text {
+  background: linear-gradient(to right, #3b82f6 0%, #6366f1 50%, #a855f7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
 /* Hauptüberschriften: Reverse-Gradient (hell an den Rändern, dunkel in der Mitte – spiegelbildlich zum Hintergrund) */
 .heading-reverse-gradient {
   background: linear-gradient(

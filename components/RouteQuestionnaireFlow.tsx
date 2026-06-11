@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react'
 import { motion, useMotionValue, useTransform, animate, PanInfo, AnimatePresence } from 'framer-motion'
 import type { RouteQuestion, RouteChoice, RouteQuestionnaireAnswers } from '@/lib/routeQuestionnaire'
 import { ROUTE_QUESTIONS } from '@/lib/routeQuestionnaire'
+import { submitSurvey } from '@/lib/survey'
 
 const SWIPE_THRESHOLD = 100
 
@@ -158,6 +159,8 @@ export default function RouteQuestionnaireFlow({ onComplete }: RouteQuestionnair
       setAnswers((prev) => ({ ...prev, [question.id]: choice }))
       if (stepIndex >= total - 1) {
         const final = { ...answers, [question.id]: choice }
+        // Antworten persistieren (best effort, blockiert den Abschluss nicht)
+        void submitSurvey({ source: 'route_questionnaire', answers: final })
         onComplete(final)
       } else {
         setStepIndex((i) => i + 1)
