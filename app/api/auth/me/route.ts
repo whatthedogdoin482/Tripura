@@ -19,7 +19,7 @@ export async function GET() {
   const supabase = getAdminClient()
   const { data: user } = await supabase
     .from('users')
-    .select('id, email, display_name, avatar_url, created_at')
+    .select('id, email, display_name, avatar_url, created_at, travel_style, language')
     .eq('id', payload.sub)
     .maybeSingle()
 
@@ -34,6 +34,8 @@ export async function GET() {
       email: user.email,
       profileImageUrl: user.avatar_url,
       createdAt: user.created_at,
+      travelStyle: user.travel_style ?? null,
+      language: user.language ?? 'de',
     },
   })
 }

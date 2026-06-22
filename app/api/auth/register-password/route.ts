@@ -1,29 +1,28 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { hashPassword } from '@/lib/auth/password'
 import { COOKIE_NAME, signSession } from '@/lib/auth/jwt'
+import { checkRateLimit, parseBody } from '@/lib/api/guard'
+import { logger } from '@/lib/log'
 
-function validatePassword(password: string): string | null {
-  if (password.length < 8) return 'Passwort muss mindestens 8 Zeichen lang sein.'
-  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-    return 'Passwort muss mindestens einen Buchstaben und eine Zahl enthalten.'
-  }
-  return null
-}
+const bodySchema = z.object({
+  email: z.string().trim().toLowerCase().email('Ungültige E-Mail-Adresse.'),
+  password: z
+    .string()
+    .min(8, 'Passwort muss mindestens 8 Zeichen lang sein.')
+    .regex(/[A-Za-z]/, 'Passwort muss mindestens einen Buchstaben enthalten.')
+    .regex(/[0-9]/, 'Passwort muss mindestens eine Zahl enthalten.'),
+})
 
 export async function POST(request: Request) {
+  const limited = checkRateLimit(request, 'auth.register-password', 5, 60 * 60 * 1000)
+  if (limited) return limited
+
   try {
-    const { email, password } = (await request.json()) as { email?: string; password?: string }
-
-    if (!email || !password) {
-      return NextResponse.json({ error: 'E-Mail und Passwort sind erforderlich.' }, { status: 400 })
-    }
-
-    const normalizedEmail = email.trim().toLowerCase()
-    const passwordError = validatePassword(password)
-    if (passwordError) {
-      return NextResponse.json({ error: passwordError }, { status: 400 })
-    }
+    const parsed = await parseBody(request, bodySchema, 'auth.register-password')
+    if (parsed.response) return parsed.response
+    const { email: normalizedEmail, password } = parsed.data
 
     const supabase = getAdminClient()
 
@@ -48,7 +47,7 @@ export async function POST(request: Request) {
         .update({ password_hash: passwordHash, password_created_at: now, last_login_at: now })
         .eq('id', existing.id)
       if (updateError) {
-        console.error('register-password update error', updateError)
+        logger.error('auth.register-password', 'update error', { error: updateError.message })
         return NextResponse.json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 })
       }
     } else {
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
         .select('id')
         .single()
       if (insertError || !inserted) {
-        console.error('register-password insert error', insertError)
+        logger.error('auth.register-password', 'insert error', { error: insertError?.message })
         return NextResponse.json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 })
       }
       userId = inserted.id
@@ -84,9 +83,12 @@ export async function POST(request: Request) {
       path: '/',
     })
 
+    logger.info('auth.register-password', 'user registered', { userId })
     return response
   } catch (error) {
-    console.error('register-password error', error)
+    logger.error('auth.register-password', 'unexpected error', {
+      error: error instanceof Error ? error.message : String(error),
+    })
     return NextResponse.json({ error: 'Unerwarteter Fehler bei der Registrierung.' }, { status: 500 })
   }
 }

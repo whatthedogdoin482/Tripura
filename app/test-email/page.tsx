@@ -1,103 +1,133 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Mail, Send, Loader2 } from 'lucide-react';
 
-type Status = {
-  ok: boolean;
-  message?: string;
-  profilesTable?: string;
-  error?: string;
-  errorMessage?: string;
-};
+const TEMPLATES = [
+  { key: 'booking', label: 'Buchungsbestätigung', desc: 'Bestätigung mit Posten und Gesamtpreis' },
+  { key: 'tripplan', label: 'Reiseplan', desc: 'Tagesplan mit Aktivitäten' },
+  { key: 'reminder', label: 'Erinnerung', desc: 'Check-in- / Abfahrts-Erinnerung' },
+] as const;
+
+type TemplateKey = (typeof TEMPLATES)[number]['key'];
 
 export default function TestEmailPage() {
-  const [status, setStatus] = useState<Status | null>(null);
+  const [template, setTemplate] = useState<TemplateKey>('booking');
   const [email, setEmail] = useState('');
-  const [sendResult, setSendResult] = useState<{ ok: boolean; message?: string; error?: string } | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/test-auth')
-      .then((res) => res.json())
-      .then(setStatus)
-      .catch(() => setStatus({ ok: false, error: 'API nicht erreichbar' }));
-  }, []);
+  const [result, setResult] = useState<{ ok: boolean; message?: string; error?: string } | null>(null);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSendResult(null);
+    setResult(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/test-auth', {
+      const res = await fetch('/api/test-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, template }),
       });
       const data = await res.json();
-      setSendResult(data);
+      setResult(res.ok ? data : { ok: false, error: data.error });
     } catch (err) {
-      setSendResult({ ok: false, error: String(err) });
+      setResult({ ok: false, error: String(err) });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-md mx-auto space-y-8">
-        <h1 className="text-2xl font-bold text-gray-900">Test: E-Mail-Login & Datenbank</h1>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-purple-50 py-16 px-4">
+      <div className="max-w-5xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-4xl font-bold heading-purple-gradient mb-2">E-Mail-Templates testen</h1>
+          <p className="text-gray-500 mb-10">
+            Vorschau der HTML-Templates und Testversand über Resend (kostenloser Dev-Tier).
+          </p>
+        </motion.div>
 
-        {/* Verbindungsstatus */}
-        <section className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">Verbindung (GET /api/test-auth)</h2>
-          {status === null ? (
-            <p className="text-gray-500">Lade …</p>
-          ) : (
-            <div className="space-y-2 text-sm">
-              <p className={status.ok ? 'text-green-600' : 'text-red-600'}>
-                {status.ok ? '✓' : '✗'} {status.message ?? status.error}
+        <div className="grid lg:grid-cols-[320px,1fr] gap-8">
+          {/* Steuerung */}
+          <div className="space-y-6">
+            <div className="glass-card rounded-3xl p-6">
+              <p className="text-sm font-semibold text-gray-700 mb-4">Template wählen</p>
+              <div className="space-y-2">
+                {TEMPLATES.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setTemplate(t.key)}
+                    className={`w-full text-left px-4 py-3 rounded-2xl border transition-all ${
+                      template === t.key
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white border-transparent shadow-md'
+                        : 'bg-white/80 text-gray-700 border-gray-200 hover:border-blue-300'
+                    }`}
+                  >
+                    <p className="font-semibold text-sm">{t.label}</p>
+                    <p className={`text-xs mt-0.5 ${template === t.key ? 'text-white/85' : 'text-gray-500'}`}>
+                      {t.desc}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="glass-card rounded-3xl p-6">
+              <p className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                <Mail className="w-4 h-4" /> Testversand
               </p>
-              {status.profilesTable && (
-                <p className="text-gray-600">Tabelle profiles: {status.profilesTable}</p>
+              <form onSubmit={handleSend} className="space-y-3">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="deine@email.de"
+                  required
+                  className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 rounded-full text-white text-sm font-semibold bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {loading ? 'Sende…' : 'Template senden'}
+                </motion.button>
+              </form>
+              {result && (
+                <p
+                  className={`mt-4 text-sm rounded-2xl px-4 py-3 border ${
+                    result.ok
+                      ? 'text-green-700 bg-green-50 border-green-100'
+                      : 'text-red-600 bg-red-50 border-red-100'
+                  }`}
+                >
+                  {result.ok ? result.message : result.error}
+                </p>
               )}
-              {status.errorMessage && (
-                <p className="text-amber-600">Details: {status.errorMessage}</p>
-              )}
+              <p className="mt-4 text-xs text-gray-400">
+                Hinweis: Ohne verifizierte Domain sendet Resend nur an die eigene Registrierungs-E-Mail.
+              </p>
             </div>
-          )}
-        </section>
+          </div>
 
-        {/* Magic-Link senden */}
-        <section className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">Magic-Link senden (POST)</h2>
-          <form onSubmit={handleSend} className="space-y-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="deine@email.de"
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
+          {/* Live-Vorschau */}
+          <motion.div
+            key={template}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="glass-card rounded-3xl p-3 overflow-hidden"
+          >
+            <iframe
+              title="Template-Vorschau"
+              src={`/api/test-email?template=${template}`}
+              className="w-full h-[720px] rounded-2xl border-0 bg-white"
             />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? 'Sende …' : 'Magic-Link an diese E-Mail senden'}
-            </button>
-          </form>
-          {sendResult && (
-            <div className={`mt-4 p-3 rounded-lg text-sm ${sendResult.ok ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-              {sendResult.ok ? '✓ ' : '✗ '}
-              {sendResult.message ?? sendResult.error}
-            </div>
-          )}
-        </section>
-
-        <p className="text-sm text-gray-500">
-          Nach dem Klick auf „Magic-Link senden“ Postfach (und Spam) prüfen. Link anklicken → du wirst eingeloggt.
-        </p>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

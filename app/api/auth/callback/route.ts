@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { COOKIE_NAME, signSession } from '@/lib/auth/jwt'
+import { checkRateLimit } from '@/lib/api/guard'
+import { logger } from '@/lib/log'
 
 export async function GET(request: Request) {
+  const limited = checkRateLimit(request, 'auth.callback', 30, 15 * 60 * 1000)
+  if (limited) return limited
+
   const url = new URL(request.url)
   const token = url.searchParams.get('token')
 
@@ -47,6 +52,8 @@ export async function GET(request: Request) {
     sub: user.id,
     email: user.email,
   })
+
+  logger.info('auth.callback', 'magic link login successful', { userId: user.id })
 
   const response = NextResponse.redirect(new URL('/', url.origin))
   const isProd = process.env.NODE_ENV === 'production'

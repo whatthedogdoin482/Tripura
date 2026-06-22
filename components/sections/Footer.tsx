@@ -1,12 +1,23 @@
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { Heart, Instagram, Twitter, Facebook, Github } from 'lucide-react';
 import TripuraLogo from '@/components/TripuraLogo';
 
-const footerLinks = {
-  Product: ['Features', 'Pricing', 'API', 'Integrations'],
-  Company: ['About', 'Blog', 'Careers', 'Press'],
-  Resources: ['Documentation', 'Help Center', 'Community', 'Contact'],
-  Legal: ['Privacy', 'Terms', 'Security', 'Cookies'],
+const footerLinks: Record<string, { label: string; href: string }[]> = {
+  Produkt: [
+    { label: 'Features', href: '/#features' },
+    { label: 'Reise planen', href: '/' },
+    { label: 'Buchungen', href: '/' },
+  ],
+  Unternehmen: [
+    { label: 'Über uns', href: '/' },
+    { label: 'Kontakt', href: '/impressum' },
+  ],
+  Rechtliches: [
+    { label: 'Impressum', href: '/impressum' },
+    { label: 'Datenschutz', href: '/datenschutz' },
+    { label: 'AGB', href: '/agb' },
+  ],
 };
 
 export function Footer() {
@@ -44,13 +55,13 @@ export function Footer() {
               <h4 className="font-semibold text-white mb-4">{category}</h4>
               <ul className="space-y-3">
                 {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
                       className="text-gray-400 hover:text-white transition-colors"
                     >
-                      {link}
-                    </a>
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -61,7 +72,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-gray-400 text-sm">
-            © 2024 Wanderlust. All rights reserved.
+            © {new Date().getFullYear()} Tripura. Alle Rechte vorbehalten.
           </p>
           <p className="text-gray-400 text-sm flex items-center gap-1">
             Made with <Heart className="w-4 h-4 text-red-500 fill-current" /> in Freiburg

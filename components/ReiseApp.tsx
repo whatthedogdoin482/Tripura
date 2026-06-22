@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navigation } from '@/components/sections/Navigation';
@@ -14,10 +13,10 @@ import { BookingSection } from '@/components/sections/BookingSection';
 import { Footer } from '@/components/sections/Footer';
 import TripuraLogo from '@/components/TripuraLogo';
 import AuthModal from '@/components/AuthModal';
+import { ProfileSection } from '@/components/ProfileSection';
 import { useAuth } from '@/contexts/AuthContext';
 import type { AppView } from '@/types';
 import type { AuthModalMode } from '@/components/AuthModal';
-import { Plus } from 'lucide-react';
 
 const VIEW_ORDER: AppView[] = ['home', 'plan', 'explore', 'budget', 'bookings', 'profile'];
 const SWIPE_OFFSET = 72;
@@ -35,24 +34,7 @@ function ReiseAppContent() {
     loginWithApple,
     registerWithPassword,
     loginWithPassword,
-    user,
-    setProfileImage,
   } = useAuth();
-
-  const profileFileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const handleProfileImagePick = () => {
-    profileFileInputRef.current?.click();
-  };
-
-  const handleProfileFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file?.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = () => setProfileImage(reader.result as string);
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
 
   const handlePlanningComplete = () => goToView('explore');
 
@@ -138,75 +120,8 @@ function ReiseAppContent() {
         );
       case 'profile':
         return (
-          <div className="pt-24 px-4">
-            <div className="max-w-4xl mx-auto">
-              <h1 className="text-4xl font-bold text-gray-900 mb-8">Dein Profil</h1>
-              <div className="bg-white rounded-3xl shadow-xl p-8">
-                <div className="flex items-center gap-6 mb-8">
-                  <div className="relative">
-                    <input
-                      ref={profileFileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleProfileFileChange}
-                      aria-hidden
-                    />
-                    {user?.profileImageUrl ? (
-                      <img
-                        src={user.profileImageUrl}
-                        alt="Profil"
-                        className="w-24 h-24 rounded-full object-cover border-2 border-gray-100 shadow-md"
-                      />
-                    ) : (
-                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">
-                        {(user?.displayName ?? 'Gast')
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')
-                          .toUpperCase()
-                          .slice(0, 2) || '?'}
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleProfileImagePick}
-                      className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
-                      title="Profilbild hinzufügen"
-                      aria-label="Profilbild hinzufügen"
-                    >
-                      <Plus className="w-4 h-4 text-gray-700" />
-                    </button>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      {user?.displayName ?? 'Gast'}
-                    </h2>
-                    <p className="text-gray-500">
-                      Reise-Enthusiast seit{' '}
-                      {(() => {
-                        const y = user?.createdAt ? new Date(user.createdAt).getFullYear() : null;
-                        return Number.isFinite(y) ? y : 2020;
-                      })()}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid sm:grid-cols-3 gap-6">
-                  <div className="p-6 rounded-2xl bg-blue-50 text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-1">12</div>
-                    <div className="text-sm text-blue-700">Geplante Trips</div>
-                  </div>
-                  <div className="p-6 rounded-2xl bg-green-50 text-center">
-                    <div className="text-3xl font-bold text-green-600 mb-1">8</div>
-                    <div className="text-sm text-green-700">Länder besucht</div>
-                  </div>
-                  <div className="p-6 rounded-2xl bg-purple-50 text-center">
-                    <div className="text-3xl font-bold text-purple-600 mb-1">4.9</div>
-                    <div className="text-sm text-purple-700">Durchschn. Bewertung</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="pt-24 px-4 pb-16">
+            <ProfileSection onOpenAuth={() => handleOpenAuth('login')} />
           </div>
         );
       default:

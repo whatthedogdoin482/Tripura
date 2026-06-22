@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { mockCreditCards, mockInsurance, mockFlights, mockReturnFlights, mockCarRentals, mockEsims, mockTransfers, formatFlightDuration, getNearestAirportCode, sortFlightsByNearestAndCheapest } from '@/data/mockData';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { redirectToCheckout, type CheckoutItem } from '@/lib/stripe/checkout';
 
 type BookingTab = 'cards' | 'insurance' | 'flights' | 'esims' | 'transfers' | 'cars';
 
@@ -33,6 +34,38 @@ export function BookingSection() {
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
   const [selectedEsimId, setSelectedEsimId] = useState<string | null>(null);
   const [selectedTransferId, setSelectedTransferId] = useState<string | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  // Ausgewählte Posten für den Gesamtpreis / Checkout zusammenstellen
+  const selectedItems: CheckoutItem[] = [];
+  const selFlight = sortedHinflug.find((f) => f.id === selectedFlightId);
+  if (selFlight) selectedItems.push({ type: 'flight', id: selFlight.id, label: `Hinflug ${selFlight.departure.city} → ${selFlight.arrival.city}`, price: selFlight.price });
+  const selReturn = (mockReturnFlights ?? []).find((f) => f.id === selectedReturnFlightId);
+  if (selReturn) selectedItems.push({ type: 'return_flight', id: selReturn.id, label: `Rückflug ${selReturn.departure.city} → ${selReturn.arrival.city}`, price: selReturn.price });
+  const selCar = mockCarRentals.find((c) => c.id === selectedCarId);
+  if (selCar) selectedItems.push({ type: 'car', id: selCar.id, label: `Mietwagen ${selCar.carModel} (1 Tag)`, price: selCar.pricePerDay });
+  const selEsim = (mockEsims ?? []).find((e) => e.id === selectedEsimId);
+  if (selEsim) selectedItems.push({ type: 'esim', id: selEsim.id, label: `eSIM ${selEsim.region}`, price: selEsim.price });
+  const selTransfer = mockTransfers.find((t) => t.id === selectedTransferId);
+  if (selTransfer) selectedItems.push({ type: 'transfer', id: selTransfer.id, label: `Transfer ${selTransfer.route}`, price: selTransfer.price });
+  const checkoutTotal = selectedItems.reduce((sum, item) => sum + item.price, 0);
+
+  const handleCheckout = async () => {
+    if (checkoutTotal <= 0 || checkoutLoading) return;
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      await redirectToCheckout({
+        amount: Math.round(checkoutTotal * 100),
+        name: `Tripura Buchung (${selectedItems.length} Posten)`,
+        items: selectedItems,
+      });
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : 'Checkout fehlgeschlagen');
+      setCheckoutLoading(false);
+    }
+  };
 
   const tabs = [
     { id: 'cards' as BookingTab, label: 'Kreditkarten', icon: CreditCard },
@@ -572,6 +605,55 @@ export function BookingSection() {
           </motion.div>
         </AnimatePresence>
         </div>
+
+        {/* Checkout-Leiste: erscheint, sobald etwas ausgewählt ist */}
+        <AnimatePresence>
+          {checkoutTotal > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              className="mt-10 rounded-3xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 p-[1.5px] shadow-xl"
+            >
+              <div className="rounded-3xl bg-white/95 backdrop-blur px-6 py-5 sm:px-8">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                      Deine Auswahl ({selectedItems.length} {selectedItems.length === 1 ? 'Posten' : 'Posten'})
+                    </p>
+                    <ul className="text-sm text-gray-700 space-y-0.5">
+                      {selectedItems.map((item) => (
+                        <li key={`${item.type}-${item.id}`} className="flex justify-between gap-4">
+                          <span className="truncate">{item.label}</span>
+                          <span className="font-medium whitespace-nowrap">{item.price} €</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="flex flex-col items-stretch sm:items-end gap-2">
+                    <p className="text-2xl font-bold text-gray-900 text-right">{checkoutTotal} €</p>
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={handleCheckout}
+                      disabled={checkoutLoading}
+                      className="px-8 py-3 rounded-full text-white font-semibold bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                      <CreditCard className="w-5 h-5" />
+                      {checkoutLoading ? 'Weiterleitung…' : 'Jetzt bezahlen'}
+                    </motion.button>
+                    <p className="text-xs text-gray-400 text-right">Stripe Test-Modus – keine echte Zahlung</p>
+                  </div>
+                </div>
+                {checkoutError && (
+                  <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-2xl px-4 py-2.5">
+                    {checkoutError}
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         </div>
       </div>
     </section>

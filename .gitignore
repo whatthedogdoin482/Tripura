@@ -13,6 +13,9 @@ out/
 .env.test.local
 .env.production.local
 
+# Supabase
+*.sql
+
 # PWA / build (next-pwa)
 **/workbox-*.js
 **/sw.js

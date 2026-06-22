@@ -1,17 +1,25 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { verifyPassword } from '@/lib/auth/password'
 import { COOKIE_NAME, signSession } from '@/lib/auth/jwt'
+import { checkRateLimit, parseBody } from '@/lib/api/guard'
+import { logger } from '@/lib/log'
+
+const bodySchema = z.object({
+  email: z.string().trim().toLowerCase().email('Ungültige E-Mail-Adresse.'),
+  password: z.string().min(1, 'Passwort ist erforderlich.'),
+})
 
 export async function POST(request: Request) {
+  const limited = checkRateLimit(request, 'auth.login-password', 10, 15 * 60 * 1000)
+  if (limited) return limited
+
   try {
-    const { email, password } = (await request.json()) as { email?: string; password?: string }
+    const parsed = await parseBody(request, bodySchema, 'auth.login-password')
+    if (parsed.response) return parsed.response
+    const { email: normalizedEmail, password } = parsed.data
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'E-Mail und Passwort sind erforderlich.' }, { status: 400 })
-    }
-
-    const normalizedEmail = email.trim().toLowerCase()
     const supabase = getAdminClient()
 
     const { data: user } = await supabase
@@ -51,9 +59,12 @@ export async function POST(request: Request) {
       path: '/',
     })
 
+    logger.info('auth.login-password', 'login successful', { userId: user.id })
     return response
   } catch (error) {
-    console.error('login-password error', error)
+    logger.error('auth.login-password', 'unexpected error', {
+      error: error instanceof Error ? error.message : String(error),
+    })
     return NextResponse.json({ error: 'Unerwarteter Fehler bei der Anmeldung.' }, { status: 500 })
   }
 }
