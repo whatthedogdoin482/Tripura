@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, LogIn, UserPlus, LogOut, Plus } from 'lucide-react';
+import { User, LogIn, UserPlus, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type AuthButtonVariant = 'hero' | 'nav';
@@ -22,10 +22,9 @@ export function AuthButton({
   isActive = false,
   className = '',
 }: AuthButtonProps) {
-  const { isLoggedIn, user, logout, setProfileImage } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileMenuOpen, setProfileMenuOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -38,19 +37,6 @@ export function AuthButton({
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  const handleAddPhoto = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file?.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = () => setProfileImage(reader.result as string);
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
-
   const baseNavClass =
     'flex items-center gap-2 px-4 py-2 rounded-full transition-all text-sm font-medium';
   const activeNavClass = isActive
@@ -61,14 +47,6 @@ export function AuthButton({
   if (variant === 'nav') {
     return (
       <div className="relative" onMouseLeave={() => { setIsOpen(false); setProfileMenuOpen(false); }}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileChange}
-          aria-hidden
-        />
         {isLoggedIn ? (
           <>
             <motion.button
@@ -90,19 +68,6 @@ export function AuthButton({
                     <User className="w-4 h-4" />
                   </div>
                 )}
-                {isActive && (
-                  <span
-                    className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm cursor-pointer hover:bg-gray-50"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddPhoto();
-                    }}
-                    title="Profilbild hinzufügen"
-                    aria-label="Profilbild hinzufügen"
-                  >
-                    <Plus className="w-2.5 h-2.5 text-gray-600" />
-                  </span>
-                )}
               </div>
               <span className="hidden sm:inline">Profil</span>
             </motion.button>
@@ -118,21 +83,10 @@ export function AuthButton({
                   <button
                     type="button"
                     onClick={() => {
-                      handleAddPhoto();
-                      setProfileMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-gray-700 hover:bg-gray-100 rounded-t-xl text-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Profilbild hinzufügen
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
                       logout();
                       setProfileMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-gray-700 hover:bg-gray-100 rounded-b-xl text-sm"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-gray-700 hover:bg-gray-100 rounded-xl text-sm"
                   >
                     <LogOut className="w-4 h-4" />
                     Abmelden

@@ -77,8 +77,8 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
         }}
         aria-hidden
       />
-      {/* Leichter Gradient für Text-Lesbarkeit – Map noch erkennbar, Text klar im Vordergrund */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/5 to-black/35 z-[1] pointer-events-none" />
+      {/* Leichter Gradient für Text-Lesbarkeit – bewusst dezenter, damit die Map sichtbar bleibt */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/12 via-black/0 to-black/18 z-[1] pointer-events-none" />
 
       {/* Weiche Blur-Maske nur im Überschneidungsbereich von Map-Labels und Hero-Text.
           Kleine Ellipse im Zentrum, damit nur der relevante Bereich leicht unscharf ist. */}
@@ -95,12 +95,13 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
         aria-hidden
       />
 
-      {/* Einheitlicher Übergang Map → Weiß: fester weißer Streifen unten, dann weicher Gradient – keine wellige Kante */}
+      {/* Übergang Map → Bereich unter dem Hero: gleicher Tinton oben wie .below-hero-content (#fafbff) */}
       <div
         className="absolute bottom-0 left-0 right-0 z-[2] pointer-events-none"
         style={{
-          height: '55vh',
-          background: 'linear-gradient(to top, #ffffff 0%, #ffffff 18%, rgba(255,255,255,0.6) 40%, transparent 100%)',
+          height: '36vh',
+          background:
+            'linear-gradient(to top, #fafbff 0%, #fafbff 8%, rgba(255,255,255,0.55) 28%, rgba(255,255,255,0.18) 52%, transparent 100%)',
         }}
         aria-hidden
       />
@@ -137,10 +138,10 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
         </motion.div>
 
         {/* Main headline */}
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-center mb-6 max-w-4xl">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-center mb-6 max-w-4xl drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)]">
           <SplitText
             text="Entdecke deine"
-            className="block mb-2 text-white w-full"
+            className="block mb-2 text-white/95 w-full"
             delay={50}
             duration={1}
             ease="power3.out"

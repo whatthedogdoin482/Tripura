@@ -1,5 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useInView } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
+import type { AuthUser } from '@/contexts/AuthContext';
 import { 
   Wallet, 
   TrendingUp, 
@@ -32,6 +34,53 @@ const defaultBudget = {
   categories: mockTrip.budget.categories.map(c => ({ ...c, allocated: 0 })),
 };
 
+type BudgetState = typeof defaultBudget;
+
+const PLANNING_BUDGET_PREFIX = 'tripura-planning-budget:';
+
+/**
+ * Planungs-Budget (nur embedded + eingeloggt) in localStorage pro Account.
+ * Wird bei Logout nicht gelöscht – erneuter Login mit demselben Account lädt den Stand wieder.
+ */
+
+/** Nur für eingeloggte Nutzer: stabiler Key pro Account (id, sonst E-Mail, sonst Displayname). */
+function getPlanningBudgetStorageKey(user: AuthUser | null, isLoggedIn: boolean): string | null {
+  if (!isLoggedIn || !user) return null;
+  if (user.id?.trim()) return `${PLANNING_BUDGET_PREFIX}${user.id}`;
+  if (user.email?.trim()) return `${PLANNING_BUDGET_PREFIX}email:${user.email}`;
+  return `${PLANNING_BUDGET_PREFIX}display:${encodeURIComponent(user.displayName || 'nutzer')}`;
+}
+
+interface PersistedPlanningBudgetV1 {
+  v: 1;
+  budget: BudgetState;
+  budgetName: string;
+  totalInput: string;
+}
+
+function mergePersistedBudget(saved: BudgetState | undefined): BudgetState {
+  if (!saved?.categories?.length) return defaultBudget;
+  const categories = defaultBudget.categories.map((def) => {
+    const match = saved.categories.find((c) => c.id === def.id);
+    if (!match) return { ...def, allocated: 0 };
+    return {
+      ...def,
+      ...match,
+      allocated: Math.max(0, Number(match.allocated) || 0),
+    };
+  });
+  const total = Math.max(0, Number(saved.total) || 0);
+  const allocatedSum = categories.reduce((s, c) => s + c.allocated, 0);
+  return {
+    ...defaultBudget,
+    ...saved,
+    currency: saved.currency || defaultBudget.currency,
+    total,
+    remaining: Math.max(0, total - allocatedSum),
+    categories,
+  };
+}
+
 /** Empfohlene Verteilung in % (Unterkunft, Essen, Aktivitäten, Transport, Shopping) */
 const RECOMMENDED_PERCENT: Record<string, number> = {
   '1': 33.33,  // Unterkunft
@@ -49,12 +98,75 @@ interface BudgetSectionProps {
 export function BudgetSection({ embedded = false }: BudgetSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
+  const { isLoggedIn, user, isLoading: authLoading } = useAuth();
   const [budget, setBudget] = useState(defaultBudget);
   const [budgetName, setBudgetName] = useState('Mein Trip');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [totalInput, setTotalInput] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
+  /** Verhindert, dass vor dem Auslesen von localStorage der Default-State gespeichert wird. */
+  const [planningBudgetHydrated, setPlanningBudgetHydrated] = useState(!embedded);
+
+  const persistKey =
+    embedded && isLoggedIn && !authLoading ? getPlanningBudgetStorageKey(user, isLoggedIn) : null;
+
+  // Hydration aus localStorage (nur eingeloggt + embedded / Planungsflow)
+  useEffect(() => {
+    if (!embedded) {
+      setPlanningBudgetHydrated(true);
+      return;
+    }
+    if (authLoading) return;
+    if (!isLoggedIn) {
+      setPlanningBudgetHydrated(true);
+      return;
+    }
+    const key = getPlanningBudgetStorageKey(user, isLoggedIn);
+    if (!key) {
+      setPlanningBudgetHydrated(true);
+      return;
+    }
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+      if (raw) {
+        const data = JSON.parse(raw) as PersistedPlanningBudgetV1;
+        if (data?.v === 1 && data.budget) {
+          setBudget(mergePersistedBudget(data.budget));
+          if (typeof data.budgetName === 'string') setBudgetName(data.budgetName);
+          if (typeof data.totalInput === 'string') setTotalInput(data.totalInput);
+        }
+      }
+    } catch {
+      /* ignore corrupt storage */
+    }
+    setPlanningBudgetHydrated(true);
+  }, [embedded, authLoading, isLoggedIn, user]);
+
+  const persistPlanningBudget = useCallback(() => {
+    if (!persistKey || !planningBudgetHydrated) return;
+    try {
+      const allocatedSum = budget.categories.reduce((s, c) => s + c.allocated, 0);
+      const payload: PersistedPlanningBudgetV1 = {
+        v: 1,
+        budget: {
+          ...budget,
+          remaining: Math.max(0, budget.total - allocatedSum),
+        },
+        budgetName,
+        totalInput,
+      };
+      localStorage.setItem(persistKey, JSON.stringify(payload));
+    } catch {
+      /* quota / private mode */
+    }
+  }, [persistKey, planningBudgetHydrated, budget, budgetName, totalInput]);
+
+  useEffect(() => {
+    if (!embedded || !isLoggedIn || !planningBudgetHydrated || authLoading || !persistKey) return;
+    const t = window.setTimeout(persistPlanningBudget, 450);
+    return () => window.clearTimeout(t);
+  }, [embedded, isLoggedIn, planningBudgetHydrated, authLoading, persistKey, persistPlanningBudget]);
 
   const totalAllocated = budget.categories.reduce((sum, cat) => sum + cat.allocated, 0);
   const totalNum = budget.total;

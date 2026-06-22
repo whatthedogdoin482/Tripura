@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navigation } from '@/components/sections/Navigation';
@@ -16,6 +17,7 @@ import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 import type { AppView } from '@/types';
 import type { AuthModalMode } from '@/components/AuthModal';
+import { Plus } from 'lucide-react';
 
 const VIEW_ORDER: AppView[] = ['home', 'plan', 'explore', 'budget', 'bookings', 'profile'];
 const SWIPE_OFFSET = 72;
@@ -34,7 +36,23 @@ function ReiseAppContent() {
     registerWithPassword,
     loginWithPassword,
     user,
+    setProfileImage,
   } = useAuth();
+
+  const profileFileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleProfileImagePick = () => {
+    profileFileInputRef.current?.click();
+  };
+
+  const handleProfileFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file?.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => setProfileImage(reader.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
   const handlePlanningComplete = () => goToView('explore');
 
@@ -125,27 +143,52 @@ function ReiseAppContent() {
               <h1 className="text-4xl font-bold text-gray-900 mb-8">Dein Profil</h1>
               <div className="bg-white rounded-3xl shadow-xl p-8">
                 <div className="flex items-center gap-6 mb-8">
-                  {user?.profileImageUrl ? (
-                    <img
-                      src={user.profileImageUrl}
-                      alt="Profil"
-                      className="w-24 h-24 rounded-full object-cover border-2 border-gray-100 shadow-md"
+                  <div className="relative">
+                    <input
+                      ref={profileFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleProfileFileChange}
+                      aria-hidden
                     />
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">
-                      {(user?.displayName ?? 'Gast')
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .slice(0, 2) || '?'}
-                    </div>
-                  )}
+                    {user?.profileImageUrl ? (
+                      <img
+                        src={user.profileImageUrl}
+                        alt="Profil"
+                        className="w-24 h-24 rounded-full object-cover border-2 border-gray-100 shadow-md"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">
+                        {(user?.displayName ?? 'Gast')
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2) || '?'}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleProfileImagePick}
+                      className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
+                      title="Profilbild hinzufügen"
+                      aria-label="Profilbild hinzufügen"
+                    >
+                      <Plus className="w-4 h-4 text-gray-700" />
+                    </button>
+                  </div>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">
                       {user?.displayName ?? 'Gast'}
                     </h2>
-                    <p className="text-gray-500">Reise-Enthusiast seit 2020</p>
+                    <p className="text-gray-500">
+                      Reise-Enthusiast seit{' '}
+                      {(() => {
+                        const y = user?.createdAt ? new Date(user.createdAt).getFullYear() : null;
+                        return Number.isFinite(y) ? y : 2020;
+                      })()}
+                    </p>
                   </div>
                 </div>
                 <div className="grid sm:grid-cols-3 gap-6">
@@ -293,7 +336,7 @@ function ReiseAppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       <Navigation
         currentView={currentView}
         onViewChange={(view) => goToView(view as AppView)}

@@ -19,7 +19,7 @@ export async function GET() {
   const supabase = getAdminClient()
   const { data: user } = await supabase
     .from('users')
-    .select('id, email, display_name, avatar_url')
+    .select('id, email, display_name, avatar_url, created_at')
     .eq('id', payload.sub)
     .maybeSingle()
 
@@ -33,6 +33,7 @@ export async function GET() {
       displayName: user.display_name ?? user.email?.split('@')[0] ?? 'Nutzer',
       email: user.email,
       profileImageUrl: user.avatar_url,
+      createdAt: user.created_at,
     },
   })
 }
