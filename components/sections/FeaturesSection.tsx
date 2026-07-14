@@ -186,11 +186,12 @@ export function FeaturesSection() {
     : [];
 
   return (
-    <section ref={sectionRef} className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '2s' }} />
+    <section ref={sectionRef} className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-transparent">
+      {/* Weiche Farbflecke ohne mix-blend-multiply (vermeidet harte horizontale Nahtlinien) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+        <div className="absolute -top-48 -right-32 w-[28rem] h-[28rem] rounded-full bg-blue-200/25 blur-3xl" />
+        <div className="absolute top-1/4 -left-32 w-[26rem] h-[26rem] rounded-full bg-purple-200/20 blur-3xl" />
+        <div className="absolute -bottom-32 right-1/4 w-[24rem] h-[24rem] rounded-full bg-violet-100/30 blur-3xl" />
       </div>
 
       <div className="relative max-w-7xl mx-auto">

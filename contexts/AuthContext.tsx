@@ -10,6 +10,7 @@ export interface AuthUser {
   displayName: string;
   email: string | null;
   profileImageUrl: string | null;
+  createdAt?: string | null;
   travelStyle?: string | null;
   language?: string | null;
 }

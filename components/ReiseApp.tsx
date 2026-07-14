@@ -34,7 +34,6 @@ function ReiseAppContent() {
     loginWithApple,
     registerWithPassword,
     loginWithPassword,
-    user,
   } = useAuth();
 
   const handlePlanningComplete = () => goToView('explore');
@@ -252,7 +251,7 @@ function ReiseAppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       <Navigation
         currentView={currentView}
         onViewChange={(view) => goToView(view as AppView)}

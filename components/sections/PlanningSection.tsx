@@ -37,6 +37,7 @@ interface PlanningSectionProps {
 export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const stepCardRef = useRef<HTMLDivElement>(null);
+  const finishTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
   
   const [currentStep, setCurrentStep] = useState<PlanningStep>('destination');
@@ -249,8 +250,29 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
       },
     });
     setCurrentStep('generating');
-    setTimeout(() => onPlanningComplete?.(), 3000);
+    if (finishTimeoutRef.current) clearTimeout(finishTimeoutRef.current);
+    finishTimeoutRef.current = setTimeout(() => onPlanningComplete?.(), 3000);
   };
+
+  useEffect(() => {
+    return () => {
+      if (finishTimeoutRef.current) clearTimeout(finishTimeoutRef.current);
+    };
+  }, []);
+
+  const StepBackHeader = ({ onBack }: { onBack: () => void }) => (
+    <div className="flex items-center justify-between mb-4">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-full px-3 py-2 hover:bg-gray-100 transition-colors"
+      >
+        <ChevronLeft className="w-5 h-5" />
+        Zurück
+      </button>
+      <div className="w-10" />
+    </div>
+  );
 
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0) {
@@ -416,6 +438,7 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
             exit={{ opacity: 0, x: -50 }}
             className="max-w-lg mx-auto text-center"
           >
+            <StepBackHeader onBack={() => setCurrentStep('destination')} />
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center mx-auto mb-6">
               <Plane className="w-10 h-10 text-white" />
             </div>
@@ -485,6 +508,7 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
             exit={{ opacity: 0, x: -50 }}
             className="max-w-md mx-auto text-center"
           >
+            <StepBackHeader onBack={() => setCurrentStep('flights')} />
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center mx-auto mb-6">
               <Calendar className="w-10 h-10 text-white" />
             </div>
@@ -563,6 +587,7 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
             exit={{ opacity: 0, x: -50 }}
             className="w-full"
           >
+            <StepBackHeader onBack={() => setCurrentStep('dates')} />
             <BudgetSection embedded />
             <div className="flex gap-3 mt-8">
               <motion.button
@@ -601,6 +626,7 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
             exit={{ opacity: 0, x: -50 }}
             className="max-w-2xl mx-auto"
           >
+            <StepBackHeader onBack={() => setCurrentStep('budget')} />
             <div className="text-center mb-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Was brauchst du noch?</h3>
               <p className="text-gray-600">Wähle für jede Option, was du möchtest – oder nichts davon.</p>
@@ -658,7 +684,7 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
                 onClick={handleExtrasContinue}
                 className="apple-button flex-1 flex items-center justify-center gap-2"
               >
-                Weiter zum Fragebogen
+                Weiter zur Flugauswahl
                 <ArrowRight className="w-5 h-5" />
               </motion.button>
             </div>
@@ -675,6 +701,7 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
             exit={{ opacity: 0, x: -50 }}
             className="max-w-2xl mx-auto"
           >
+            <StepBackHeader onBack={() => setCurrentStep('extras')} />
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Flug wählen</h3>
               <p className="text-gray-600 text-sm">Wähle zuerst Hin- und Rückflug. Danach siehst du die Angebote zu den Dingen, die du gebraucht hast.</p>
@@ -779,6 +806,7 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
             exit={{ opacity: 0, scale: 0.95 }}
             className="w-full"
           >
+            <StepBackHeader onBack={() => setCurrentStep('flightChoice')} />
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-8 h-8 text-white" />
@@ -861,6 +889,12 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
             exit={{ opacity: 0, x: -50 }}
             className="max-w-2xl mx-auto"
           >
+            <StepBackHeader
+              onBack={() => {
+                setCurrentStep('questionnaire');
+                setCurrentQuestionIndex(Math.max(0, tripQuestionnaire.length - 1));
+              }}
+            />
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Deine weiteren Angebote</h3>
               <p className="text-gray-600 text-sm">Du hast deinen Flug gewählt. Hier siehst du die Angebote zu den Dingen, die du gebraucht hast – und „Später prüfen“-Optionen.</p>
@@ -1116,6 +1150,15 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
             animate={{ opacity: 1 }}
             className="text-center py-20"
           >
+            <div className="max-w-2xl mx-auto">
+              <StepBackHeader
+                onBack={() => {
+                  if (finishTimeoutRef.current) clearTimeout(finishTimeoutRef.current);
+                  finishTimeoutRef.current = null;
+                  setCurrentStep('offers');
+                }}
+              />
+            </div>
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
