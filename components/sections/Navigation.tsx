@@ -54,14 +54,14 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
   return (
     <>
       {/* Desktop Navigation: auf Landing-Page oben nur Logo, bei Hover/Scroll volle Leiste */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-4">
+      <header className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-2">
         <div className={`max-w-6xl mx-auto ${collapsed ? 'flex justify-center' : ''}`}>
           <nav
             onMouseEnter={() => setIsNavHovered(true)}
             onMouseLeave={() => setIsNavHovered(false)}
-            className={`rounded-full px-6 py-3 bg-white/85 backdrop-blur-md shadow-sm ${
-              collapsed ? 'inline-flex' : 'flex w-full'
-            }`}
+            className={`rounded-full px-3.5 py-1 backdrop-blur-[2px] border border-white/20 ${
+              isScrolled || !isLandingPage ? 'bg-white/30 shadow-sm' : 'bg-white/15'
+            } ${collapsed ? 'inline-flex' : 'flex w-full'}`}
           >
             <div className={`flex items-center ${collapsed ? '' : 'w-full justify-between gap-4'}`}>
               {/* Logo – klick führt immer zum Start-Screen (Home + nach oben scrollen) */}
@@ -122,7 +122,7 @@ export function Navigation({ currentView = 'home', onViewChange, onOpenAuth }: N
                               onClick={() => navigateTo(item.id)}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className={`relative z-10 flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+                              className={`relative z-10 flex items-center gap-2 px-2.5 py-1 rounded-full transition-colors ${
                                 currentView === item.id
                                   ? 'text-white'
                                   : 'text-gray-700 hover:bg-gray-100'
