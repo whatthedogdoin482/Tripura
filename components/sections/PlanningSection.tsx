@@ -1224,14 +1224,14 @@ export function PlanningSection({ onPlanningComplete }: PlanningSectionProps) {
       className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-white"
     >
       <div className="max-w-4xl mx-auto">
-        {/* Section header */}
+        {/* Section header with micro-label */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <span className="inline-block px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm font-medium mb-4">
+          <span className="text-xs font-medium tracking-widest text-purple-600 uppercase mb-4 block">
             Reise planen
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">

@@ -220,7 +220,7 @@ export function BudgetSection({ embedded = false }: BudgetSectionProps) {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-2 rounded-full bg-green-100 text-green-700 text-sm font-medium mb-4">
+          <span className="text-xs font-medium tracking-widest text-green-600 uppercase mb-4 block">
             Budget-Planung
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
@@ -311,21 +311,21 @@ export function BudgetSection({ embedded = false }: BudgetSectionProps) {
               )}
             </div>
 
-            {/* Quick stats */}
+            {/* Quick stats - Restructured: label above value */}
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                <div className="flex items-center gap-2 text-gray-600 mb-1">
+                <div className="flex items-center gap-2 text-gray-500 mb-2">
                   <TrendingDown className="w-4 h-4" />
-                  <span className="text-sm font-medium">Tägliches Budget</span>
+                  <span className="text-xs font-medium tracking-wider uppercase">Täglich</span>
                 </div>
                 <span className="text-2xl font-bold text-gray-800">
                   {totalNum > 0 ? `${Math.round(totalNum / 5).toLocaleString('de-DE')} €` : '–'}
                 </span>
               </div>
               <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                <div className="flex items-center gap-2 text-gray-600 mb-1">
+                <div className="flex items-center gap-2 text-gray-500 mb-2">
                   <TrendingUp className="w-4 h-4" />
-                  <span className="text-sm font-medium">KI-Ersparnis</span>
+                  <span className="text-xs font-medium tracking-wider uppercase">KI-Ersparnis</span>
                 </div>
                 <span className="text-2xl font-bold text-gray-800">~15%</span>
               </div>
