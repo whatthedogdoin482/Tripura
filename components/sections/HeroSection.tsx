@@ -212,7 +212,11 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
           </motion.button>
         </motion.div>
 
-        {/* Stats */}
+        {/* TODO Leonard: One-line proof under CTAs (Borealis Cool pattern)
+            Example: "50.000+ Reisende · Seit 2023" or similar credibility claim
+            Remove this comment when adding real proof line */}
+
+        {/* Stats - Restructured: label above value (industrial-HMI grammar) */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -220,9 +224,9 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
           className="mt-16 grid grid-cols-3 gap-8 sm:gap-16"
         >
           {[
-            { value: '50K+', label: 'Reisende' },
-            { value: '120+', label: 'Länder' },
-            { value: '4.9', label: 'Bewertung' },
+            { value: '50K+', label: 'REISENDE' },
+            { value: '120+', label: 'LÄNDER' },
+            { value: '4.9', label: 'BEWERTUNG' },
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -231,8 +235,8 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
               transition={{ delay: 1 + index * 0.1 }}
               className="text-center"
             >
+              <div className="text-xs font-medium tracking-wider text-white/60 uppercase mb-2">{stat.label}</div>
               <div className="text-3xl sm:text-4xl font-bold text-white">{stat.value}</div>
-              <div className="text-sm text-white/60">{stat.label}</div>
             </motion.div>
           ))}
         </motion.div>

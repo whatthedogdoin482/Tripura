@@ -195,21 +195,23 @@ export function FeaturesSection() {
       </div>
 
       <div className="relative max-w-7xl mx-auto">
-        {/* Section header */}
+        {/* Section header with micro-label */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.8 }}
           className="text-center mb-16 sm:mb-20"
         >
-          <motion.span
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
             transition={{ delay: 0.2 }}
-            className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4"
+            className="mb-4"
           >
-            Features
-          </motion.span>
+            <span className="text-xs font-medium tracking-widest text-blue-600 uppercase">
+              Features
+            </span>
+          </motion.div>
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
             Alles was du für die
             <span className="gradient-text"> perfekte Reise </span>
