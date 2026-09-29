@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAdminClient } from '@/lib/supabase/admin'
+import { userRepo } from '@/lib/db/memory'
 import { verifyPassword } from '@/lib/auth/password'
 import { COOKIE_NAME, signSession } from '@/lib/auth/jwt'
 import { checkRateLimit, parseBody } from '@/lib/api/guard'
@@ -20,15 +20,8 @@ export async function POST(request: Request) {
     if (parsed.response) return parsed.response
     const { email: normalizedEmail, password } = parsed.data
 
-    const supabase = getAdminClient()
+    const user = userRepo.findByEmail(normalizedEmail)
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('id, email, password_hash')
-      .eq('email', normalizedEmail)
-      .maybeSingle()
-
-    // Always return generic error for bad credentials
     const genericError = NextResponse.json(
       { error: 'E-Mail oder Passwort ist falsch.' },
       { status: 400 },
@@ -43,10 +36,7 @@ export async function POST(request: Request) {
       return genericError
     }
 
-    await supabase
-      .from('users')
-      .update({ last_login_at: new Date().toISOString() })
-      .eq('id', user.id)
+    userRepo.update(user.id, { last_login_at: new Date().toISOString() })
 
     const sessionToken = signSession({ sub: user.id, email: normalizedEmail })
     const response = NextResponse.json({ ok: true })
@@ -68,4 +58,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unerwarteter Fehler bei der Anmeldung.' }, { status: 500 })
   }
 }
-

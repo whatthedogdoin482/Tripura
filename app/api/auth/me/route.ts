@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { COOKIE_NAME, verifySession } from '@/lib/auth/jwt'
-import { getAdminClient } from '@/lib/supabase/admin'
+import { userRepo } from '@/lib/db/memory'
 
 export async function GET() {
   const cookieStore = await cookies()
@@ -16,12 +16,7 @@ export async function GET() {
     return NextResponse.json({ user: null })
   }
 
-  const supabase = getAdminClient()
-  const { data: user } = await supabase
-    .from('users')
-    .select('id, email, display_name, avatar_url, created_at, travel_style, language')
-    .eq('id', payload.sub)
-    .maybeSingle()
+  const user = userRepo.findById(payload.sub)
 
   if (!user) {
     return NextResponse.json({ user: null })
@@ -39,4 +34,3 @@ export async function GET() {
     },
   })
 }
-

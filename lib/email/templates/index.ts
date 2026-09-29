@@ -1,7 +1,7 @@
 /**
  * HTML-E-Mail-Templates (Buchung, Reiseplan, Erinnerung).
  * E-Mail-sicher gebaut: Tabellen-Layout + Inline-Styles, kein externes CSS.
- * Testbar über die Seite /test-email (Vorschau + Versand via Resend).
+ * Vorschau über die Seite /test-email.
  */
 
 export interface EmailTemplate {

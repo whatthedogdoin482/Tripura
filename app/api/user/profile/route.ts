@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getSession } from '@/lib/auth/session'
-import { getAdminClient } from '@/lib/supabase/admin'
+import { userRepo } from '@/lib/db/memory'
 import { checkRateLimit, parseBody } from '@/lib/api/guard'
 import { logger } from '@/lib/log'
 
@@ -13,7 +13,6 @@ const patchSchema = z
     displayName: z.string().trim().min(1, 'Anzeigename darf nicht leer sein.').max(80, 'Anzeigename ist zu lang.').optional(),
     travelStyle: z.enum(TRAVEL_STYLES).nullable().optional(),
     language: z.enum(LANGUAGES).optional(),
-    // Data-URLs können groß werden – auf ~500 KB begrenzen
     profileImageUrl: z.string().max(500_000, 'Bild ist zu groß (max. ~500 KB).').nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, 'Keine gültigen Felder zum Aktualisieren.')
@@ -42,14 +41,9 @@ export async function GET() {
     return NextResponse.json({ error: 'Nicht angemeldet.' }, { status: 401 })
   }
 
-  const supabase = getAdminClient()
-  const { data: user, error } = await supabase
-    .from('users')
-    .select('id, email, display_name, avatar_url, travel_style, language')
-    .eq('id', session.sub)
-    .maybeSingle()
+  const user = userRepo.findById(session.sub)
 
-  if (error || !user) {
+  if (!user) {
     return NextResponse.json({ error: 'Profil nicht gefunden.' }, { status: 404 })
   }
 
@@ -75,16 +69,10 @@ export async function PATCH(request: Request) {
   if (body.language !== undefined) update.language = body.language
   if (body.profileImageUrl !== undefined) update.avatar_url = body.profileImageUrl
 
-  const supabase = getAdminClient()
-  const { data: user, error } = await supabase
-    .from('users')
-    .update(update)
-    .eq('id', session.sub)
-    .select('id, email, display_name, avatar_url, travel_style, language')
-    .single()
+  const user = userRepo.update(session.sub, update)
 
-  if (error || !user) {
-    logger.error('user.profile', 'PATCH failed', { error: error?.message })
+  if (!user) {
+    logger.error('user.profile', 'PATCH failed', { userId: session.sub })
     return NextResponse.json({ error: 'Profil konnte nicht gespeichert werden.' }, { status: 500 })
   }
 

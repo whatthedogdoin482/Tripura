@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAdminClient } from '@/lib/supabase/admin'
-import { sendDevEmail } from '@/lib/email/resend'
+import { loginTokenRepo, userRepo } from '@/lib/db/memory'
 import { checkRateLimit, parseBody } from '@/lib/api/guard'
 import { logger } from '@/lib/log'
 
@@ -20,51 +19,35 @@ export async function POST(request: Request) {
     if (parsed.response) return parsed.response
 
     const normalizedEmail = parsed.data.email
-    const supabase = getAdminClient()
+    const user = userRepo.upsertByEmail(normalizedEmail)
 
-    // Upsert user
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .upsert({ email: normalizedEmail }, { onConflict: 'email' })
-      .select('id, email')
-      .single()
-
-    if (userError || !user) {
-      logger.error('auth.request-link', 'upsert user failed', { error: userError?.message })
-      return NextResponse.json({ error: 'Fehler beim Anlegen des Nutzers' }, { status: 500 })
-    }
-
-    // Create login token
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000).toISOString()
 
-    const { error: tokenError } = await supabase.from('login_tokens').insert({
-      user_id: user.id,
-      token,
-      expires_at: expiresAt,
-    })
-
-    if (tokenError) {
-      logger.error('auth.request-link', 'insert login token failed', { error: tokenError.message })
-      return NextResponse.json({ error: 'Fehler beim Erzeugen des Login-Links' }, { status: 500 })
-    }
+    loginTokenRepo.create(user.id, token, expiresAt)
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const loginUrl = new URL('/api/auth/callback', baseUrl)
     loginUrl.searchParams.set('token', token)
 
-    // Send email via Resend
-    await sendDevEmail({
-      to: normalizedEmail,
-      subject: 'Dein Tripura Login-Link',
-      text: `Klicke auf diesen Link, um dich bei Tripura anzumelden (gültig für ${TOKEN_TTL_MINUTES} Minuten):\n\n${loginUrl.toString()}\n\nWenn du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.`,
-      html: `<p>Klicke auf diesen Link, um dich bei <strong>Tripura</strong> anzumelden (gültig für ${TOKEN_TTL_MINUTES} Minuten):</p>
-<p><a href="${loginUrl.toString()}">${loginUrl.toString()}</a></p>
-<p>Wenn du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.</p>`,
+    logger.info('auth.request-link', 'magic link created (no email provider)', {
+      userId: user.id,
+      loginUrl: loginUrl.toString(),
     })
 
-    logger.info('auth.request-link', 'login link sent', { userId: user.id })
-    return NextResponse.json({ ok: true })
+    const isProd = process.env.NODE_ENV === 'production'
+    if (isProd) {
+      return NextResponse.json(
+        { error: 'Magic-Link per E-Mail ist derzeit nicht eingerichtet. Bitte Passwort-Login nutzen.' },
+        { status: 503 },
+      )
+    }
+
+    return NextResponse.json({
+      ok: true,
+      message: 'Kein E-Mail-Dienst aktiv – Link nur für lokale Entwicklung.',
+      devLoginUrl: loginUrl.toString(),
+    })
   } catch (error) {
     logger.error('auth.request-link', 'unexpected error', {
       error: error instanceof Error ? error.message : String(error),
@@ -72,4 +55,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unerwarteter Fehler' }, { status: 500 })
   }
 }
-

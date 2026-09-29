@@ -14,8 +14,8 @@ export interface AuthModalProps {
   onRegisterWithPassword?: (email: string, password: string) => Promise<{ error: Error | null }>;
   /** E-Mail & Passwort Login */
   onLoginWithPassword?: (email: string, password: string) => Promise<{ error: Error | null }>;
-  /** Magic-Link per E-Mail senden */
-  onEmailRequest?: (email: string) => Promise<{ error: Error | null }>;
+  /** Magic-Link (Dev: Link in der Antwort) */
+  onEmailRequest?: (email: string) => Promise<{ error: Error | null; devLoginUrl?: string; message?: string }>;
   onApple?: () => void;
   onGoogle?: () => void;
 }
@@ -63,6 +63,7 @@ export default function AuthModal({
   const [tab, setTab] = useState<'password' | 'magic'>('password');
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [devLoginUrl, setDevLoginUrl] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -78,6 +79,7 @@ export default function AuthModal({
     if (!onEmailRequest) return;
     setShowEmailInput(true);
     setEmailSent(false);
+    setDevLoginUrl(null);
     setEmailError(null);
   };
 
@@ -86,13 +88,16 @@ export default function AuthModal({
     if (!onEmailRequest || !email.trim()) return;
     setLoading(true);
     setEmailError(null);
-    const { error } = await onEmailRequest(email.trim());
+    setDevLoginUrl(null);
+    const { error, devLoginUrl: link, message } = await onEmailRequest(email.trim());
     setLoading(false);
     if (error) {
       setEmailError(error.message);
       return;
     }
     setEmailSent(true);
+    if (link) setDevLoginUrl(link);
+    if (message && !link) setEmailError(message);
   };
 
   const handleApple = () => {
@@ -244,9 +249,23 @@ export default function AuthModal({
                     <p className="text-xs text-red-600">{emailError}</p>
                   )}
                   {emailSent ? (
-                    <div className="flex items-center gap-2 text-sm text-green-600">
-                      <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                      <span>Link gesendet – bitte E-Mail prüfen.</span>
+                    <div className="space-y-2 text-sm text-green-700">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                        <span>
+                          {devLoginUrl
+                            ? 'Dev-Login: Link unten öffnen (kein E-Mail-Versand).'
+                            : 'Anfrage OK – kein E-Mail-Dienst aktiv.'}
+                        </span>
+                      </div>
+                      {devLoginUrl && (
+                        <a
+                          href={devLoginUrl}
+                          className="block break-all text-xs font-medium text-blue-600 underline underline-offset-2"
+                        >
+                          {devLoginUrl}
+                        </a>
+                      )}
                     </div>
                   ) : (
                     <div className="flex gap-2">

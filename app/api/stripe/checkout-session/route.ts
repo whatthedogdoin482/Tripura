@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { getStripeServer } from '@/lib/stripe/server'
 import { STRIPE_CONFIG } from '@/lib/stripe/config'
 import { getSession } from '@/lib/auth/session'
-import { getAdminClient } from '@/lib/supabase/admin'
+import { orderRepo } from '@/lib/db/memory'
 import { checkRateLimit, parseBody } from '@/lib/api/guard'
 import { logger } from '@/lib/log'
 
@@ -88,24 +88,15 @@ export async function POST(request: Request) {
     const authSession = await getSession()
     let orderId: string | null = null
     try {
-      const supabase = getAdminClient()
-      const { data: order, error } = await supabase
-        .from('orders')
-        .insert({
-          user_id: authSession?.sub ?? null,
-          trip_id: body.tripId ?? null,
-          amount_total: body.amount ?? null,
-          currency: STRIPE_CONFIG.currency,
-          status: 'pending',
-          items: body.items ?? null,
-        })
-        .select('id')
-        .single()
-      if (error) {
-        logger.error('stripe.checkout', 'order insert error', { error: error.message })
-      } else {
-        orderId = order.id
-      }
+      const order = orderRepo.create({
+        user_id: authSession?.sub ?? null,
+        trip_id: body.tripId ?? null,
+        amount_total: body.amount ?? null,
+        currency: STRIPE_CONFIG.currency,
+        status: 'pending',
+        items: body.items ?? null,
+      })
+      orderId = order.id
     } catch (err) {
       logger.error('stripe.checkout', 'order insert failed', {
         error: err instanceof Error ? err.message : String(err),
@@ -124,8 +115,7 @@ export async function POST(request: Request) {
     // Stripe-Session-ID in der Order hinterlegen, damit der Webhook sie findet
     if (orderId) {
       try {
-        const supabase = getAdminClient()
-        await supabase.from('orders').update({ stripe_session_id: session.id }).eq('id', orderId)
+        orderRepo.update(orderId, { stripe_session_id: session.id })
       } catch (err) {
         logger.error('stripe.checkout', 'order session-id update failed', {
           error: err instanceof Error ? err.message : String(err),

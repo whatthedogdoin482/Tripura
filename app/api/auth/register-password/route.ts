@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAdminClient } from '@/lib/supabase/admin'
+import { userRepo } from '@/lib/db/memory'
 import { hashPassword } from '@/lib/auth/password'
 import { COOKIE_NAME, signSession } from '@/lib/auth/jwt'
 import { checkRateLimit, parseBody } from '@/lib/api/guard'
@@ -24,52 +24,29 @@ export async function POST(request: Request) {
     if (parsed.response) return parsed.response
     const { email: normalizedEmail, password } = parsed.data
 
-    const supabase = getAdminClient()
-
-    const { data: existing } = await supabase
-      .from('users')
-      .select('id, email, password_hash')
-      .eq('email', normalizedEmail)
-      .maybeSingle()
+    const existing = userRepo.findByEmail(normalizedEmail)
 
     if (existing?.password_hash) {
       return NextResponse.json({ error: 'Für diese E-Mail existiert bereits ein Passwort-Konto.' }, { status: 400 })
     }
 
     const passwordHash = await hashPassword(password)
-    const now = new Date().toISOString()
+    const ts = new Date().toISOString()
 
-    let userId = existing?.id
-
+    let userId: string
     if (existing) {
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ password_hash: passwordHash, password_created_at: now, last_login_at: now })
-        .eq('id', existing.id)
-      if (updateError) {
-        logger.error('auth.register-password', 'update error', { error: updateError.message })
+      const updated = userRepo.update(existing.id, {
+        password_hash: passwordHash,
+        password_created_at: ts,
+        last_login_at: ts,
+      })
+      if (!updated) {
         return NextResponse.json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 })
       }
+      userId = updated.id
     } else {
-      const { data: inserted, error: insertError } = await supabase
-        .from('users')
-        .insert({
-          email: normalizedEmail,
-          password_hash: passwordHash,
-          password_created_at: now,
-          last_login_at: now,
-        })
-        .select('id')
-        .single()
-      if (insertError || !inserted) {
-        logger.error('auth.register-password', 'insert error', { error: insertError?.message })
-        return NextResponse.json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 })
-      }
+      const inserted = userRepo.createWithPassword(normalizedEmail, passwordHash)
       userId = inserted.id
-    }
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 })
     }
 
     const sessionToken = signSession({ sub: userId, email: normalizedEmail })
@@ -92,4 +69,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unerwarteter Fehler bei der Registrierung.' }, { status: 500 })
   }
 }
-

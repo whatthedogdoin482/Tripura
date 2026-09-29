@@ -44,16 +44,8 @@ export default function DatenschutzPage() {
       <h2>4. Drittanbieter</h2>
       <ul>
         <li>
-          <strong>Supabase</strong> (Datenbank-Hosting, EU-Region möglich) – Speicherung der oben
-          genannten Daten.
-        </li>
-        <li>
           <strong>Stripe</strong> (Zahlungsabwicklung) – verarbeitet Zahlungsdaten gemäß eigener
           Datenschutzerklärung.
-        </li>
-        <li>
-          <strong>Resend</strong> (E-Mail-Versand) – verarbeitet deine E-Mail-Adresse zum Versand
-          von Login-Links und Buchungsbestätigungen.
         </li>
         <li>
           <strong>Google Maps</strong> (Kartenanzeige) – beim Laden der Karte wird deine
@@ -75,7 +67,14 @@ export default function DatenschutzPage() {
         Aufsichtsbehörde.
       </p>
 
-      <h2>7. Hinweis zur Entwicklungsphase</h2>
+      <h2>7. Speicherort (Entwicklung)</h2>
+      <p>
+        In der aktuellen Entwicklungsversion werden Konto- und Planungsdaten im Arbeitsspeicher des
+        Servers gehalten und gehen beim Neustart der Anwendung verloren. Für den Produktivbetrieb ist
+        ein persistenter Datenspeicher vorgesehen.
+      </p>
+
+      <h2>8. Hinweis zur Entwicklungsphase</h2>
       <p>
         Diese Datenschutzerklärung ist ein Entwurf für die Entwicklungsphase und muss vor dem
         öffentlichen Launch durch eine rechtlich geprüfte Fassung ersetzt werden.

@@ -16,7 +16,7 @@ A modern web application for planning vacations with AI-powered route planning, 
 - **Frontend**: Next.js 14, React 18, TypeScript
 - **Styling**: Tailwind CSS, Framer Motion
 - **Maps**: Google Maps JavaScript API
-- **Database & Auth**: Supabase (PostgreSQL, Auth, Realtime)
+- **Auth & Dev-Daten**: Custom JWT + In-Memory-Speicher (`lib/db/memory.ts`)
 - **Payments**: Stripe (Checkout, Webhooks)
 - **PWA**: Next-PWA for app store deployment
 - **Icons**: Lucide React
@@ -93,14 +93,16 @@ Required variables:
 |----------|-------------|
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps API key for map components |
 | `NEXT_PUBLIC_APP_URL` | App URL (e.g. `http://localhost:3000`) |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (from [Dashboard](https://supabase.com/dashboard) → Project Settings → API) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key (same place as URL; safe to expose in the browser) |
+| `AUTH_JWT_SECRET` | Secret for session cookies (generate a long random string) |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (test mode) |
+| `STRIPE_SECRET_KEY` | Stripe secret key (server only) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 
-### Using Supabase
+### Auth
 
-- **Client Components**: `import { createClient } from '@/lib/supabase/client'`
-- **Server Components / Actions / Route Handlers**: `import { createClient } from '@/lib/supabase/server'` (use `await createClient()`)
-- **Auth**: Use `supabase.auth.signInWithPassword()`, `supabase.auth.getUser()`, etc. For protected server logic, use `supabase.auth.getUser()` (or `getSession()` on the client).
+- **Password**: `POST /api/auth/register-password`, `POST /api/auth/login-password`
+- **Magic link (dev)**: `POST /api/auth/request-link` returns `devLoginUrl` locally (no email provider)
+- **Session**: HTTP-only cookie `tripura_session`, verified in `lib/auth/jwt.ts`
 
 ### Using Stripe
 

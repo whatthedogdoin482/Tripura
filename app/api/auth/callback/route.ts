@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAdminClient } from '@/lib/supabase/admin'
+import { loginTokenRepo, userRepo } from '@/lib/db/memory'
 import { COOKIE_NAME, signSession } from '@/lib/auth/jwt'
 import { checkRateLimit } from '@/lib/api/guard'
 import { logger } from '@/lib/log'
@@ -15,34 +15,22 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/login?error=missing_token', url.origin))
   }
 
-  const supabase = getAdminClient()
+  const loginToken = loginTokenRepo.findByToken(token)
 
-  const { data: loginToken, error } = await supabase
-    .from('login_tokens')
-    .select('id, user_id, expires_at, used')
-    .eq('token', token)
-    .maybeSingle()
-
-  if (error || !loginToken) {
+  if (!loginToken) {
     return NextResponse.redirect(new URL('/login?error=link_invalid', url.origin))
   }
 
   const now = new Date()
-  const expiresAt = new Date(loginToken.expires_at as string)
+  const expiresAt = new Date(loginToken.expires_at)
 
   if (loginToken.used || expiresAt < now) {
     return NextResponse.redirect(new URL('/login?error=link_expired', url.origin))
   }
 
-  // Mark token as used
-  await supabase.from('login_tokens').update({ used: true }).eq('id', loginToken.id)
+  loginTokenRepo.markUsed(loginToken.id)
 
-  // Fetch user
-  const { data: user } = await supabase
-    .from('users')
-    .select('id, email, display_name, avatar_url')
-    .eq('id', loginToken.user_id)
-    .maybeSingle()
+  const user = userRepo.findById(loginToken.user_id)
 
   if (!user) {
     return NextResponse.redirect(new URL('/login?error=user_missing', url.origin))
@@ -67,4 +55,3 @@ export async function GET(request: Request) {
 
   return response
 }
-

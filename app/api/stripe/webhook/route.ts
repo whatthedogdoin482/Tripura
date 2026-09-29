@@ -2,12 +2,10 @@ import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { getStripeServer } from '@/lib/stripe/server'
-import { getAdminClient } from '@/lib/supabase/admin'
+import { orderRepo } from '@/lib/db/memory'
 import { logger } from '@/lib/log'
 
-/** Order anhand der Stripe-Session aktualisieren (Webhook → orders-Tabelle) */
 async function updateOrderFromSession(session: Stripe.Checkout.Session, status: 'paid' | 'failed') {
-  const supabase = getAdminClient()
   const orderId = session.metadata?.order_id ?? session.client_reference_id
 
   const update = {
@@ -18,22 +16,22 @@ async function updateOrderFromSession(session: Stripe.Checkout.Session, status: 
   }
 
   if (orderId) {
-    const { error } = await supabase.from('orders').update(update).eq('id', orderId)
-    if (!error) return
-    logger.error('stripe.webhook', 'order update by id failed', { orderId, error: error.message })
+    const updated = orderRepo.update(orderId, update)
+    if (updated) return
+    logger.error('stripe.webhook', 'order update by id failed', { orderId })
   }
 
-  // Fallback: über stripe_session_id matchen, sonst neue Zeile anlegen
-  const { data: existing } = await supabase
-    .from('orders')
-    .select('id')
-    .eq('stripe_session_id', session.id)
-    .maybeSingle()
+  const existing = orderRepo.findByStripeSessionId(session.id)
 
   if (existing) {
-    await supabase.from('orders').update(update).eq('id', existing.id)
+    orderRepo.update(existing.id, update)
   } else {
-    await supabase.from('orders').insert({ ...update, user_id: null })
+    orderRepo.create({
+      ...update,
+      user_id: null,
+      trip_id: null,
+      items: null,
+    })
   }
 }
 

@@ -26,17 +26,17 @@ interface AuthContextValue {
   isLoggedIn: boolean;
   user: AuthUser | null;
   isLoading: boolean;
-  /** E-Mail-Link anfordern (Supabase Magic Link) */
-  loginWithEmail: (email: string) => Promise<{ error: Error | null }>;
+  /** Magic-Link anfordern (Dev: Link in der Antwort, kein E-Mail-Versand) */
+  loginWithEmail: (email: string) => Promise<{ error: Error | null; devLoginUrl?: string; message?: string }>;
   /** E-Mail + Passwort registrieren */
   registerWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   /** E-Mail + Passwort Login */
   loginWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
-  /** Mit Google anmelden (Supabase OAuth) */
+  /** Mit Google anmelden (Demo) */
   loginWithGoogle: () => Promise<{ error: Error | null }>;
-  /** Mit Apple anmelden (Supabase OAuth) */
+  /** Mit Apple anmelden (Demo) */
   loginWithApple: () => Promise<{ error: Error | null }>;
-  /** Demo-Login ohne Supabase (localStorage), wenn Supabase nicht konfiguriert ist */
+  /** Demo-Login ohne Server-Session (localStorage) */
   login: (displayName?: string) => void;
   logout: () => Promise<void>;
   setProfileImage: (url: string | null) => Promise<void>;
@@ -135,22 +135,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  const loginWithEmail = useCallback(async (email: string): Promise<{ error: Error | null }> => {
+  const loginWithEmail = useCallback(
+    async (email: string): Promise<{ error: Error | null; devLoginUrl?: string; message?: string }> => {
     try {
       const res = await fetch('/api/auth/request-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        return { error: new Error(data.error || 'Fehler beim Senden des Login-Links') };
+        return { error: new Error(data.error || 'Fehler beim Erzeugen des Login-Links') };
       }
-      return { error: null };
+      return {
+        error: null,
+        devLoginUrl: typeof data.devLoginUrl === 'string' ? data.devLoginUrl : undefined,
+        message: typeof data.message === 'string' ? data.message : undefined,
+      };
     } catch {
-      return { error: new Error('Netzwerkfehler beim Senden des Login-Links') };
+      return { error: new Error('Netzwerkfehler beim Login-Link') };
     }
-  }, []);
+  },
+    [],
+  );
 
   const loginWithGoogle = useCallback(async (): Promise<{ error: Error | null }> => {
     login();
