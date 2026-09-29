@@ -1,8 +1,8 @@
-const withPWA = require('next-pwa')
+const path = require('path')
+const { PHASE_PRODUCTION_BUILD } = require('next/constants')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Dev-Popup unten links abschalten
   devIndicators: false,
   images: {
     remotePatterns: [
@@ -13,15 +13,21 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
   },
-  // Next.js 16: leere Turbopack-Config, damit Webpack-Erweiterung (next-pwa) keinen Fehler wirft
-  turbopack: {},
-  // PWA-Optionen für next-pwa (Next warnt über unbekannten Key, wird aber an webpack durchgereicht)
-  pwa: {
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
-    disable: process.env.NODE_ENV === 'development',
+  turbopack: {
+    root: path.join(__dirname),
   },
 }
 
-module.exports = withPWA(nextConfig)
+module.exports = (phase) => {
+  if (phase === PHASE_PRODUCTION_BUILD) {
+    const withPWA = require('@ducanh2912/next-pwa').default({
+      dest: 'public',
+      register: true,
+      skipWaiting: true,
+      disable: false,
+    })
+    return withPWA(nextConfig)
+  }
+
+  return nextConfig
+}

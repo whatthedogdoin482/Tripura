@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
     "security:check": "node scripts/security-check.cjs",
     "test:prompt": "npx -y tsx scripts/test-prompt-builder.ts"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@googlemaps/js-api-loader": "^1.16.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -26,7 +28,6 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.294.0",
     "next": "^16.2.9",
-    "next-pwa": "^2.0.2",
     "postcss": "^8.4.32",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -48,7 +49,8 @@
     "@types/react-dom": "^18.3.1",
     "baseline-browser-mapping": "^2.10.0",
     "eslint": "8.55.0",
-    "eslint-config-next": "14.0.4"
+    "eslint-config-next": "14.0.4",
+    "webpack": "^5.108.4"
   },
   "overrides": {
     "axios@1.14.1": "1.14.0",
