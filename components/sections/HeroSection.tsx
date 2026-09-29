@@ -212,17 +212,9 @@ export function HeroSection({ onStartPlanning, onOpenAuth }: HeroSectionProps) {
           </motion.button>
         </motion.div>
 
-        {/* One-line proof under CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="mt-6 text-center"
-        >
-          <p className="text-sm sm:text-base text-white/80 font-medium">
-            50.000+ Reisende. Trusted seit 2023.
-          </p>
-        </motion.div>
+        {/* TODO Leonard: One-line proof under CTAs (Borealis Cool pattern)
+            Example: "50.000+ Reisende · Seit 2023" or similar credibility claim
+            Remove this comment when adding real proof line */}
 
         {/* Stats - Restructured: label above value (industrial-HMI grammar) */}
         <motion.div
